@@ -1644,10 +1644,11 @@ function followUps(){
   return out.sort((a,b)=>b.d-a.d);
 }
 function leagueCounts(){ let paid=0, ugc=0; for(const s of Object.values(recompute.detail||{})){ if(!s) continue; s.free?ugc++:paid++; } return {paid, ugc}; }
-const spendMonth = k => { const d = firstDate(k) || k.bookedOn; return d ? d.slice(0,7) : null; };
+const spendDay = (k, id) => dealDay(id, k) || firstDate(k);
+const spendMonth = (k, id) => { const d = spendDay(k, id); return d ? d.slice(0,7) : null; };
 const thisMonth = () => iso(TODAY).slice(0,7);
 const monthName = ym => new Date(ym+"-01T00:00:00").toLocaleDateString("en-GB",{month:"long",year:"numeric"});
-function brandSpend(bk, ym, exceptId){ const name=BRANDS.find(b=>b.key===bk)?.name; return Object.entries(S.campaigns).filter(([id,k])=>id!==exceptId && k.brand===name && k.status!=="Cancelled" && spendMonth(k)===ym).reduce((a,[,k])=>a+(k.price||0),0); }
+function brandSpend(bk, ym, exceptId){ const name=BRANDS.find(b=>b.key===bk)?.name; return Object.entries(S.campaigns).filter(([id,k])=>id!==exceptId && k.brand===name && k.status!=="Cancelled" && spendMonth(k, id)===ym).reduce((a,[,k])=>a+(k.price||0),0); }
 function codeTaken(code, exceptId){ if(!code) return null; const c=code.trim().toLowerCase(); return Object.entries(S.campaigns).find(([id,k])=>id!==exceptId && k.status!=="Cancelled" && k.hasCode && (k.promoCode||"").trim().toLowerCase()===c) || null; }
 const activeCreator = c => !c.dnb && (Object.values(c.brands||{}).some(v=>v && v!=="none" && v!=="declined") || Object.values(S.campaigns).some(k=>k.handle===c.handle));
 function scoreHTML(h){
@@ -1823,7 +1824,7 @@ function budgetsHTML(ym){
   const anyBudget = rows.some(r=>r.budget!=null);
   return `<div class="section">
     <h2>Spend · ${esc(monthName(ym))}</h2>
-    <p class="lede">Agreed deal prices, counted in the month of each deal's first post.${anyBudget?"":" No monthly budgets set yet. The admin sets them in Admin → Rules &amp; budgets."}</p>
+    <p class="lede">Agreed deal prices, counted in the month each deal was booked (its deal day).${anyBudget?"":" No monthly budgets set yet. The admin sets them in Admin → Rules &amp; budgets."}</p>
     <div class="budgets">${rows.map(({b,spent,budget})=>{ const p = budget ? Math.min(100, spent/budget*100) : 0, over = budget!=null && spent>budget;
       return `<div class="bud ${over?"over":""}"><div class="bud-h"><i class="dot" style="background:${b.c}"></i><b>${esc(b.name)}</b><span class="num">${fmt$(spent,0)}${budget!=null?` <small>of ${fmt$(budget,0)}</small>`:""}</span></div>
         ${budget!=null?`<div class="bud-bar"><span style="width:${p}%;background:${over?"var(--bad)":b.c}"></span></div><small class="bud-s">${over?`${fmt$(spent-budget,0)} over budget`:`${fmt$(budget-spent,0)} left`}</small>`:`<small class="bud-s">No budget set</small>`}</div>`;}).join("")}</div>
@@ -2517,7 +2518,7 @@ function openCampaign(id, handle, unlockTerms, preBrand){
   $("#k_hc")?.addEventListener("change", e=>{ $("#codeBox").hidden = !e.target.checked; });
   $("#seeHow")?.addEventListener("click", e=>{ const b=$("#howBox"); b.hidden=!b.hidden; e.target.textContent=b.hidden?"See how":"Hide"; e.target.setAttribute("aria-expanded", String(!b.hidden)); });
   const updBudget = ()=>{ const el=$("#budgetHint"); if(!el) return; const bn=$("#k_b").value, bk=BNAME[bn], B=S.settings.budgets?.[bk];
-    const firstD=[...list.querySelectorAll(".dl-date")].map(i=>i.value).filter(Boolean).sort()[0]; const ym=(firstD||iso(TODAY)).slice(0,7);
+    const firstD=[...list.querySelectorAll(".dl-date")].map(i=>i.value).filter(Boolean).sort()[0]; const ym=((isNew ? iso(TODAY) : (dealDay(id,k) || firstD)) || iso(TODAY)).slice(0,7);
     if(B==null){ el.textContent=""; return; } const spent=brandSpend(bk, ym, id), price=Number($("#k_price").value||0), left=B-spent-price;
     el.innerHTML = `${esc(bn)} · ${esc(monthName(ym))}: ${fmt$(spent,0)} already spent of ${fmt$(B,0)}. ${left>=0?`${fmt$(left,0)} left after this deal.`:`<b style="color:var(--bad)">${fmt$(-left,0)} over budget with this deal.</b>`}`; };
   $("#k_b")?.addEventListener("change", updBudget); $("#k_price")?.addEventListener("input", updBudget); list.addEventListener("change", updBudget); updBudget();
@@ -3022,7 +3023,7 @@ function reportHTML(){
   const months = monthsBetween(P.from, P.to).reverse();
   const brands = P.brand ? BRANDS.filter(b=>b.key===P.brand) : BRANDS;
   const row = ym => { const budget = brands.map(b=>budgetFor(b.key,ym)).filter(x=>x!=null); const B = budget.length ? budget.reduce((a,x)=>a+x,0) : null; const spent = brands.reduce((a,b)=>a+brandSpend(b.key,ym),0);
-    const deals = Object.values(S.campaigns).filter(k=>k.status!=="Cancelled" && spendMonth(k)===ym && brands.some(b=>b.name===k.brand)).length; return {ym, B, spent, deals}; };
+    const deals = Object.entries(S.campaigns).filter(([id,k])=>k.status!=="Cancelled" && spendMonth(k, id)===ym && brands.some(b=>b.name===k.brand)).length; return {ym, B, spent, deals}; };
   const rows = months.map(row);
   const tB = rows.reduce((a,r)=>a+(r.B||0),0), tS = rows.reduce((a,r)=>a+r.spent,0), tD = rows.reduce((a,r)=>a+r.deals,0);
   const max = Math.max(1, ...rows.map(r=>Math.max(r.B||0, r.spent)));
@@ -3041,7 +3042,7 @@ function reportHTML(){
       <div class="kpi"><div class="v" style="color:${tS>tB&&tB?"var(--bad)":"inherit"}">${tB?(tS>tB?"+":"")+fmt$(Math.abs(tS-tB),0):"—"}</div><div class="k">${tB?(tS>tB?"Over budget":"Left unspent"):"No budget set"}</div></div>
       <div class="kpi"><div class="v">${tB?Math.round(tS/tB*100)+"%":"—"}</div><div class="k">Of budget used</div></div>
     </div>
-    <p class="hint">Spend is the agreed deal price, counted in the month of the deal's first post (cancelled deals excluded). Click a month to see its deals and set budgets for that month only.</p>
+    <p class="hint">Spend is the agreed deal price, counted in the month the deal was booked, its deal day, even if it posts later (cancelled deals excluded; old imported deals without a booking date use their first post). Click a month to see its deals and set budgets for that month only.</p>
     <div class="rp-legend"><span><i class="rp-b"></i>Budget</span><span><i class="rp-s"></i>Spent</span><span><i class="rp-o"></i>Over budget</span></div>
     <div class="rp-table" role="table">
       <div class="rp-tr rp-head" role="row"><span>Month</span><span></span><span class="r">Budget</span><span class="r">Spent</span><span class="r">Left</span><span class="r">Deals</span></div>
@@ -3058,7 +3059,7 @@ function reportHTML(){
     ${sel ? monthDetailHTML(sel) : ""}`;
 }
 function monthDetailHTML(ym){
-  const ks = Object.entries(S.campaigns).filter(([,k])=>k.status!=="Cancelled" && spendMonth(k)===ym).sort((a,b)=>(b[1].price||0)-(a[1].price||0));
+  const ks = Object.entries(S.campaigns).filter(([id,k])=>k.status!=="Cancelled" && spendMonth(k, id)===ym).sort((a,b)=>(b[1].price||0)-(a[1].price||0));
   const ov = S.settings.budgetMonths?.[ym] || {};
   return `<section class="adm-card rp-detail" id="rpDetail">
     <h3 class="pb-h">${esc(monthName(ym))}</h3>
