@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Percent Labs Creator Hub</title>
+<title>Percent Labs Creators Hub</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -662,6 +662,94 @@ table.compact{min-width:760px}
 .rc-save[hidden]{display:none}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;z-index:60;font-weight:500;max-width:calc(100% - 32px)}
 @media (prefers-reduced-motion:no-preference){.drawer{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:.6}}}
+
+/* v3: period filter, late results, admin sections */
+.boardtop{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.boardtop h2{margin:0} .boardtop .lede{margin:4px 0 0}
+.per{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 12px}
+.boardtop .per{margin:0}
+.per-nav{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:2px 4px}
+.per-b{padding:2px 10px;font-size:16px;line-height:1.2;border-radius:999px}
+.per-l{position:relative;display:inline-flex;align-items:center;padding:4px 8px;font-size:13px;cursor:pointer;white-space:nowrap}
+.per-in{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;font-size:16px}
+.per-in::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.per-nav .linkbtn{font-size:12px;padding:0 8px}
+.per-by{display:inline-grid} .per-tag{font-size:13px;font-weight:500;color:var(--muted);margin-left:6px}
+.latebadge{display:inline-block;margin-top:4px;font-size:11px;font-weight:700;color:#fff;background:var(--bad);border-radius:6px;padding:1px 7px}
+.lockrow{font-size:12.5px;color:var(--muted);background:var(--sunk);border-radius:8px;padding:7px 10px;align-self:center}
+.dl.url-locked .dl-url{background:var(--sunk);color:var(--muted);cursor:not-allowed}
+.late-modal{position:fixed;inset:0;z-index:80;background:rgba(12,13,12,.55);display:grid;place-items:center;padding:16px;animation:lmIn .18s ease}
+@keyframes lmIn{from{opacity:0}to{opacity:1}}
+.lm-card{background:var(--surface);color:var(--fg);border-radius:18px;max-width:560px;width:100%;max-height:min(80vh,680px);display:grid;grid-template-rows:auto minmax(0,1fr) auto;box-shadow:0 24px 60px rgba(0,0,0,.35);border-top:5px solid var(--bad);overflow:hidden}
+.lm-h{display:flex;gap:14px;padding:20px 22px 12px} .lm-h h2{margin:0;font-family:var(--display);font-size:22px;letter-spacing:-.02em;color:var(--bad)} .lm-h p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+.lm-ic{flex:none;width:38px;height:38px;border-radius:50%;background:var(--bad);color:#fff;display:grid;place-items:center;font-weight:800;font-size:20px}
+.lm-list{overflow:auto;padding:0 22px;display:grid;align-content:start}
+.lm-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.lm-who{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap} .lm-who small{color:var(--muted);display:inline-flex;gap:5px;align-items:center}
+.lm-what{grid-column:1;display:grid;gap:2px;font-size:12.5px;color:var(--muted)} .lm-what b{color:var(--fg);font-weight:600} .lm-what em{color:var(--bad);font-style:normal;font-weight:700}
+.lm-row .btn{grid-column:2;grid-row:1/3}
+.lm-f{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 22px;border-top:1px solid var(--line);background:var(--bg)}
+.adm > *,#adBody{min-width:0} #adBody .tablewrap{max-width:100%}
+.adm-filters .tb{min-width:0} .adm-filters input[type=month]{max-width:170px}
+.adm-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.adm-tabs button{border:0;background:none;font:inherit;font-size:14px;padding:10px 14px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;display:inline-flex;gap:6px;align-items:center}
+.adm-tabs button[aria-selected="true"]{color:var(--fg);font-weight:600;border-bottom-color:var(--ember)}
+.adm-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:20px;align-items:start}
+.adm-card{min-width:0}
+.adm-filters{flex-wrap:wrap;align-items:flex-end;gap:10px;margin-bottom:16px}
+.att-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:14px;align-items:start}
+.att{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:14px 16px;display:grid;gap:10px;min-width:0}
+.att.bad{box-shadow:inset 4px 0 0 var(--bad)} .att.warn{box-shadow:inset 4px 0 0 var(--warn)}
+.att-h{display:flex;align-items:center;gap:8px} .att-h b{font-size:15px}
+.att-n{margin-left:auto;font-family:var(--mono);font-weight:700;font-size:13px;background:var(--sunk);border-radius:999px;padding:1px 9px}
+.att.bad .att-n{background:var(--bad-bg);color:var(--bad)} .att.warn .att-n{background:var(--warn-bg);color:var(--warn)}
+.att-sub{margin:-4px 0 0;font-size:12.5px;color:var(--muted)}
+.att-list{display:grid}
+.att-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)} .att-row:first-child{border-top:0}
+.att-row > div{flex:1;min-width:0} .att-row small{color:var(--muted)}
+.att-what{font-size:12.5px;color:var(--muted);margin-top:2px} .att-what em{color:var(--bad);font-style:normal;font-weight:600}
+.rc-total{border-top:1px solid var(--line);padding-top:8px;font-weight:600}
+.brandlist{display:grid;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.bl-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);flex-wrap:wrap} .bl-row:first-child{border-top:0}
+.bl-row b{flex:1} .bl-col{width:34px;height:26px;border:1px solid var(--line);border-radius:6px;padding:0;background:none;cursor:pointer}
+.bl-confirm{flex-basis:100%;display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--bad)}
+.linkbtn.danger{color:var(--bad)}
+.addbrand-card{margin-top:12px;border:1px dashed var(--line);border-radius:12px;padding:14px;display:grid;gap:10px}
+.ab-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:end}
+.ab-col input{width:48px;height:38px;border:1px solid var(--line);border-radius:8px;padding:2px;background:var(--bg)}
+.ulist{display:grid;gap:10px}
+.urow{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:12px 14px;display:grid;gap:8px}
+.urow.off{opacity:.65}
+.u-acts{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap} .u-role{width:auto;padding:5px 8px;font-size:12.5px}
+.adduser{gap:12px}
+.tm-btn{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}
+.tm-btn:hover{border-color:var(--fg)} .tm-btn.on{border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
+.rp-legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin:4px 0 8px} .rp-legend span{display:inline-flex;gap:6px;align-items:center} .rp-legend i{width:14px;height:8px;border-radius:3px;display:inline-block}
+.rp-b{background:color-mix(in srgb,var(--fg) 18%,transparent)} .rp-s{background:var(--good)} .rp-o{background:var(--bad)}
+.rp-table{display:grid;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.rp-tr{display:grid;grid-template-columns:150px minmax(80px,1fr) 90px 90px 90px 56px;gap:10px;align-items:center;padding:10px 14px;border:0;border-top:1px solid var(--line);background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}
+.rp-tr:hover{background:var(--bg)} .rp-tr.on{background:var(--sunk)}
+.rp-head{cursor:default;border-top:0;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--bg)}
+.rp-tr .r{text-align:right}
+.rp-bars{display:grid;gap:3px} .rp-bars i{display:block;height:7px;border-radius:3px;min-width:2px}
+.rp-matrix td:first-child{white-space:nowrap} .overcell{color:var(--bad);font-weight:600}
+.rp-detail{margin-top:22px;border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--surface)}
+@media (max-width:640px){
+  .rp-tr{grid-template-columns:minmax(0,1fr) 76px 76px;row-gap:6px}
+  .rp-tr > :nth-child(2){grid-column:1/-1;grid-row:2} .rp-tr > :nth-child(5),.rp-tr > :nth-child(6){display:none}
+  .rp-head > :nth-child(2){display:none}
+  .ab-row{grid-template-columns:minmax(0,1fr) auto} .ab-row .btn{grid-column:1/-1}
+  .boardtop{align-items:stretch}
+}
+
+.ro-note{background:var(--sunk);color:var(--muted);border-radius:8px;padding:8px 12px;font-size:13px}
+.roles-h{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+.roles-new{grid-template-columns:minmax(0,220px) auto}
+.rmatrix{min-width:560px} .rmatrix th,.rmatrix td{padding:8px 10px} .rmatrix .c{text-align:center}
+.rmatrix th small{display:block;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;font-size:11px}
+.rmatrix tr{cursor:default} .rmatrix tr.rg td{background:var(--bg);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.rmatrix input[type=checkbox]{width:18px;height:18px;cursor:pointer} .rmatrix input:disabled{cursor:not-allowed}
+.rdel{display:block;margin:4px auto 0;font-size:11.5px}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -674,7 +762,7 @@ table.compact{min-width:760px}
 <header class="top">
   <div class="wrap">
     <div class="bar">
-      <div class="mark"><svg class="lockup" xmlns="http://www.w3.org/2000/svg" viewBox="40 40 975.6 257" role="img" aria-label="Percent Labs"><g transform="translate(60.480000000000004,60.480000000000004) scale(0.44528737527830464)"><g transform="translate(-600.06 -360.69)"><path d="M998.85 759.48 C912.55 845.77 772.65 845.77 686.35 759.48 C600.06 673.19 600.06 533.28 686.35 446.98 C772.65 360.69 912.55 360.69 998.85 446.98 C1085.14 533.28 1085.14 673.19 998.85 759.48" class="lg-disc"></path><path d="M890.22 726.62 C867.33 708.93 872.89 673.95 890.44 656.5 C908.14 638.91 943.36 633.39 961.41 656.17 C976.55 675.29 980.06 708.44 961.38 726.75 C942.77 745 909.55 741.56 890.22 726.62 M1023.41 700.62 C1023.28 668.83 1007.45 637.49 988.08 612.93 C970.02 589.04 950.29 566.38 929.7 544.65 C854.92 622.4 778.02 698.01 697.84 770.19 C713.75 782.74 729.26 794.41 747.82 802.91 C780.45 785.41 810.56 763.99 839.94 741.57 C862.82 759.1 884.57 773.62 911.53 781.94 C941.11 791.08 977.01 781.17 999.24 759.09 C1014.8 743.62 1023.5 722.71 1023.41 700.62" class="lg-mark"></path><path d="M727.3 551.9 C709.32 532.94 710.02 498.04 727.38 481.12 C744.72 464.23 779.78 463.64 798.99 481.24 C818.85 499.45 817.7 532.85 798.81 551.56 C779.75 570.44 746.01 571.64 727.3 551.9 M937.38 403.56 C904.79 421.25 874.69 442.43 845.26 464.9 C822.37 447.37 800.35 432.36 773.67 424.52 C744.8 416.04 707.87 425.01 685.96 447.38 C670.81 462.83 661.98 484.04 661.79 505.85 C661.51 537.1 678.36 569.17 697.12 593.53 C715.34 617.29 734.75 640.22 755.5 661.81 C830.28 584.06 907.18 508.45 987.36 436.27 C971.45 423.72 955.94 412.05 937.38 403.56" class="lg-mark"></path></g></g><g transform="translate(343.2,198.48000000000002)"><g><path d="M6.72-59.52L21.60-59.52L21.60-51.48L22.80-51.48Q29.64-61.20 42.48-61.20L42.48-61.20Q49.68-61.20 55.80-57.36Q61.92-53.52 65.64-46.32Q69.36-39.12 69.36-29.76L69.36-29.76Q69.36-20.40 65.64-13.20Q61.92-6 55.80-2.16Q49.68 1.68 42.48 1.68L42.48 1.68Q29.64 1.68 23.04-7.68L23.04-7.68L21.84-7.68L21.84 24L6.72 24L6.72-59.52ZM37.92-11.28Q45.12-11.28 49.68-16.20Q54.24-21.12 54.24-29.76L54.24-29.76Q54.24-38.40 49.68-43.32Q45.12-48.24 37.92-48.24L37.92-48.24Q30.72-48.24 26.16-43.32Q21.60-38.40 21.60-29.76L21.60-29.76Q21.60-21.12 26.16-16.20Q30.72-11.28 37.92-11.28L37.92-11.28ZM75.60-29.76Q75.60-39.12 79.38-46.26Q83.16-53.40 89.94-57.30Q96.72-61.20 105.48-61.20L105.48-61.20Q114.12-61.20 120.66-57.36Q127.20-53.52 130.80-46.50Q134.40-39.48 134.40-30.48L134.40-30.48L134.40-25.32L91.08-25.32Q91.32-19.20 95.58-15.24Q99.84-11.28 106.20-11.28L106.20-11.28Q111.96-11.28 115.14-13.80Q118.32-16.32 120.12-20.40L120.12-20.40L132.48-13.92Q124.20 1.68 105.72 1.68L105.72 1.68Q96.96 1.68 90.12-2.22Q83.28-6.12 79.44-13.26Q75.60-20.40 75.60-29.76L75.60-29.76ZM119.04-36.60Q118.44-41.76 114.78-45Q111.12-48.24 105.36-48.24L105.36-48.24Q99.48-48.24 95.70-45Q91.92-41.76 91.20-36.60L91.20-36.60L119.04-36.60ZM158.64-51.12L159.84-51.12Q161.52-55.68 165.18-57.72Q168.84-59.76 174.72-59.76L174.72-59.76L180.96-59.76L180.96-47.04L172.08-47.04Q166.08-47.04 162.48-43.86Q158.88-40.68 158.88-34.56L158.88-34.56L158.88 0L143.76 0L143.76-59.52L158.64-59.52L158.64-51.12ZM183.24-29.76Q183.24-38.76 187.32-45.96Q191.40-53.16 198.48-57.18Q205.56-61.20 214.20-61.20L214.20-61.20Q226.20-61.20 233.82-54.90Q241.44-48.60 243.48-38.16L243.48-38.16L228.84-35.04Q228.12-40.80 224.52-44.40Q220.92-48 214.44-48L214.44-48Q207.36-48 202.86-43.08Q198.36-38.16 198.36-29.76L198.36-29.76Q198.36-21.36 202.86-16.44Q207.36-11.52 214.44-11.52L214.44-11.52Q220.92-11.52 224.58-15Q228.24-18.48 229.32-24.60L229.32-24.60L243.96-21.12Q241.32-10.80 233.76-4.56Q226.20 1.68 214.20 1.68L214.20 1.68Q205.56 1.68 198.48-2.34Q191.40-6.36 187.32-13.56Q183.24-20.76 183.24-29.76L183.24-29.76ZM249.72-29.76Q249.72-39.12 253.50-46.26Q257.28-53.40 264.06-57.30Q270.84-61.20 279.60-61.20L279.60-61.20Q288.24-61.20 294.78-57.36Q301.32-53.52 304.92-46.50Q308.52-39.48 308.52-30.48L308.52-30.48L308.52-25.32L265.20-25.32Q265.44-19.20 269.70-15.24Q273.96-11.28 280.32-11.28L280.32-11.28Q286.08-11.28 289.26-13.80Q292.44-16.32 294.24-20.40L294.24-20.40L306.60-13.92Q298.32 1.68 279.84 1.68L279.84 1.68Q271.08 1.68 264.24-2.22Q257.40-6.12 253.56-13.26Q249.72-20.40 249.72-29.76L249.72-29.76ZM293.16-36.60Q292.56-41.76 288.90-45Q285.24-48.24 279.48-48.24L279.48-48.24Q273.60-48.24 269.82-45Q266.04-41.76 265.32-36.60L265.32-36.60L293.16-36.60ZM332.76-59.52L332.76-50.64L333.96-50.64Q338.64-60.48 352.32-60.48L352.32-60.48Q359.16-60.48 364.44-57.30Q369.72-54.12 372.60-48.48Q375.48-42.84 375.48-35.52L375.48-35.52L375.48 0L360.36 0L360.36-34.80Q360.36-41.52 357.12-44.88Q353.88-48.24 347.64-48.24L347.64-48.24Q340.68-48.24 336.84-43.62Q333-39 333-30.72L333-30.72L333 0L317.88 0L317.88-59.52L332.76-59.52ZM380.76-59.52L395.64-59.52L395.64-78L410.76-78L410.76-59.52L427.08-59.52L427.08-47.28L410.76-47.28L410.76-15.84Q410.76-12.24 414.12-12.24L414.12-12.24L425.64-12.24L425.64 0L408.84 0Q402.84 0 399.24-3.66Q395.64-7.32 395.64-13.44L395.64-13.44L395.64-47.28L380.76-47.28L380.76-59.52Z" class="lg-word"></path><g transform="translate(430.44000000000005,0)"><path d="M21.84-84L21.84 0L6.72 0L6.72-84L21.84-84ZM34.56-44.40Q36.96-51.84 43.50-56.52Q50.04-61.20 60.96-61.20L60.96-61.20Q72.84-61.20 79.62-55.26Q86.40-49.32 86.40-38.28L86.40-38.28L86.40 0L72 0L72-6.96L70.32-6.96Q69-3.84 65.22-1.08Q61.44 1.68 54.24 1.68L54.24 1.68Q44.76 1.68 38.58-3.42Q32.40-8.52 32.40-17.40L32.40-17.40Q32.40-26.28 38.70-31.14Q45-36 55.44-36L55.44-36L71.76-36L71.76-39.36Q71.76-43.80 69-46.50Q66.24-49.20 60.72-49.20L60.72-49.20Q55.32-49.20 52.32-46.62Q49.32-44.04 48.48-39.72L48.48-39.72L34.56-44.40ZM47.52-17.76Q47.52-14.52 50.10-12.54Q52.68-10.56 57.36-10.56L57.36-10.56Q63.72-10.56 67.74-14.22Q71.76-17.88 71.76-23.76L71.76-23.76L71.76-24.72L56.52-24.72Q52.32-24.72 49.92-22.80Q47.52-20.88 47.52-17.76L47.52-17.76ZM114.24-84L114.24-51.84L115.44-51.84Q122.04-61.20 134.88-61.20L134.88-61.20Q142.08-61.20 148.20-57.36Q154.32-53.52 158.04-46.32Q161.76-39.12 161.76-29.76L161.76-29.76Q161.76-20.40 158.04-13.20Q154.32-6 148.20-2.16Q142.08 1.68 134.88 1.68L134.88 1.68Q122.04 1.68 115.20-8.04L115.20-8.04L114.00-8.04L114.00 0L99.12 0L99.12-84L114.24-84ZM130.32-48.24Q123.12-48.24 118.56-43.32Q114.00-38.40 114.00-29.76L114.00-29.76Q114.00-21.12 118.56-16.20Q123.12-11.28 130.32-11.28L130.32-11.28Q137.52-11.28 142.08-16.20Q146.64-21.12 146.64-29.76L146.64-29.76Q146.64-38.40 142.08-43.32Q137.52-48.24 130.32-48.24L130.32-48.24ZM170.64-42.84Q170.64-51.48 177-56.34Q183.36-61.20 194.16-61.20L194.16-61.20Q203.88-61.20 210.36-56.82Q216.84-52.44 219.12-45L219.12-45L205.44-40.80Q203.52-49.68 194.16-49.68L194.16-49.68Q189.84-49.68 187.56-48.12Q185.28-46.56 185.28-43.80L185.28-43.80Q185.28-40.92 187.62-39.42Q189.96-37.92 194.88-36.96L194.88-36.96L198-36.36Q205.80-34.80 210.72-32.88Q215.64-30.96 218.58-27.36Q221.52-23.76 221.52-17.88L221.52-17.88Q221.52-8.64 214.80-3.48Q208.08 1.68 196.56 1.68L196.56 1.68Q184.80 1.68 177.42-3.36Q170.04-8.40 168.48-17.76L168.48-17.76L182.40-21.36Q184.44-9.84 196.56-9.84L196.56-9.84Q201.60-9.84 204.24-11.76Q206.88-13.68 206.88-16.68L206.88-16.68Q206.88-19.44 204.36-21.06Q201.84-22.68 196.08-23.76L196.08-23.76L192.96-24.36Q182.28-26.40 176.46-30.54Q170.64-34.68 170.64-42.84L170.64-42.84Z" class="lg-labs"></path></g></g></g></svg><span class="mark-sep" aria-hidden="true"></span><div><h1>Creator Hub</h1><small>Paid influencers &amp; UGC</small></div></div>
+      <div class="mark"><svg class="lockup" xmlns="http://www.w3.org/2000/svg" viewBox="40 40 975.6 257" role="img" aria-label="Percent Labs"><g transform="translate(60.480000000000004,60.480000000000004) scale(0.44528737527830464)"><g transform="translate(-600.06 -360.69)"><path d="M998.85 759.48 C912.55 845.77 772.65 845.77 686.35 759.48 C600.06 673.19 600.06 533.28 686.35 446.98 C772.65 360.69 912.55 360.69 998.85 446.98 C1085.14 533.28 1085.14 673.19 998.85 759.48" class="lg-disc"></path><path d="M890.22 726.62 C867.33 708.93 872.89 673.95 890.44 656.5 C908.14 638.91 943.36 633.39 961.41 656.17 C976.55 675.29 980.06 708.44 961.38 726.75 C942.77 745 909.55 741.56 890.22 726.62 M1023.41 700.62 C1023.28 668.83 1007.45 637.49 988.08 612.93 C970.02 589.04 950.29 566.38 929.7 544.65 C854.92 622.4 778.02 698.01 697.84 770.19 C713.75 782.74 729.26 794.41 747.82 802.91 C780.45 785.41 810.56 763.99 839.94 741.57 C862.82 759.1 884.57 773.62 911.53 781.94 C941.11 791.08 977.01 781.17 999.24 759.09 C1014.8 743.62 1023.5 722.71 1023.41 700.62" class="lg-mark"></path><path d="M727.3 551.9 C709.32 532.94 710.02 498.04 727.38 481.12 C744.72 464.23 779.78 463.64 798.99 481.24 C818.85 499.45 817.7 532.85 798.81 551.56 C779.75 570.44 746.01 571.64 727.3 551.9 M937.38 403.56 C904.79 421.25 874.69 442.43 845.26 464.9 C822.37 447.37 800.35 432.36 773.67 424.52 C744.8 416.04 707.87 425.01 685.96 447.38 C670.81 462.83 661.98 484.04 661.79 505.85 C661.51 537.1 678.36 569.17 697.12 593.53 C715.34 617.29 734.75 640.22 755.5 661.81 C830.28 584.06 907.18 508.45 987.36 436.27 C971.45 423.72 955.94 412.05 937.38 403.56" class="lg-mark"></path></g></g><g transform="translate(343.2,198.48000000000002)"><g><path d="M6.72-59.52L21.60-59.52L21.60-51.48L22.80-51.48Q29.64-61.20 42.48-61.20L42.48-61.20Q49.68-61.20 55.80-57.36Q61.92-53.52 65.64-46.32Q69.36-39.12 69.36-29.76L69.36-29.76Q69.36-20.40 65.64-13.20Q61.92-6 55.80-2.16Q49.68 1.68 42.48 1.68L42.48 1.68Q29.64 1.68 23.04-7.68L23.04-7.68L21.84-7.68L21.84 24L6.72 24L6.72-59.52ZM37.92-11.28Q45.12-11.28 49.68-16.20Q54.24-21.12 54.24-29.76L54.24-29.76Q54.24-38.40 49.68-43.32Q45.12-48.24 37.92-48.24L37.92-48.24Q30.72-48.24 26.16-43.32Q21.60-38.40 21.60-29.76L21.60-29.76Q21.60-21.12 26.16-16.20Q30.72-11.28 37.92-11.28L37.92-11.28ZM75.60-29.76Q75.60-39.12 79.38-46.26Q83.16-53.40 89.94-57.30Q96.72-61.20 105.48-61.20L105.48-61.20Q114.12-61.20 120.66-57.36Q127.20-53.52 130.80-46.50Q134.40-39.48 134.40-30.48L134.40-30.48L134.40-25.32L91.08-25.32Q91.32-19.20 95.58-15.24Q99.84-11.28 106.20-11.28L106.20-11.28Q111.96-11.28 115.14-13.80Q118.32-16.32 120.12-20.40L120.12-20.40L132.48-13.92Q124.20 1.68 105.72 1.68L105.72 1.68Q96.96 1.68 90.12-2.22Q83.28-6.12 79.44-13.26Q75.60-20.40 75.60-29.76L75.60-29.76ZM119.04-36.60Q118.44-41.76 114.78-45Q111.12-48.24 105.36-48.24L105.36-48.24Q99.48-48.24 95.70-45Q91.92-41.76 91.20-36.60L91.20-36.60L119.04-36.60ZM158.64-51.12L159.84-51.12Q161.52-55.68 165.18-57.72Q168.84-59.76 174.72-59.76L174.72-59.76L180.96-59.76L180.96-47.04L172.08-47.04Q166.08-47.04 162.48-43.86Q158.88-40.68 158.88-34.56L158.88-34.56L158.88 0L143.76 0L143.76-59.52L158.64-59.52L158.64-51.12ZM183.24-29.76Q183.24-38.76 187.32-45.96Q191.40-53.16 198.48-57.18Q205.56-61.20 214.20-61.20L214.20-61.20Q226.20-61.20 233.82-54.90Q241.44-48.60 243.48-38.16L243.48-38.16L228.84-35.04Q228.12-40.80 224.52-44.40Q220.92-48 214.44-48L214.44-48Q207.36-48 202.86-43.08Q198.36-38.16 198.36-29.76L198.36-29.76Q198.36-21.36 202.86-16.44Q207.36-11.52 214.44-11.52L214.44-11.52Q220.92-11.52 224.58-15Q228.24-18.48 229.32-24.60L229.32-24.60L243.96-21.12Q241.32-10.80 233.76-4.56Q226.20 1.68 214.20 1.68L214.20 1.68Q205.56 1.68 198.48-2.34Q191.40-6.36 187.32-13.56Q183.24-20.76 183.24-29.76L183.24-29.76ZM249.72-29.76Q249.72-39.12 253.50-46.26Q257.28-53.40 264.06-57.30Q270.84-61.20 279.60-61.20L279.60-61.20Q288.24-61.20 294.78-57.36Q301.32-53.52 304.92-46.50Q308.52-39.48 308.52-30.48L308.52-30.48L308.52-25.32L265.20-25.32Q265.44-19.20 269.70-15.24Q273.96-11.28 280.32-11.28L280.32-11.28Q286.08-11.28 289.26-13.80Q292.44-16.32 294.24-20.40L294.24-20.40L306.60-13.92Q298.32 1.68 279.84 1.68L279.84 1.68Q271.08 1.68 264.24-2.22Q257.40-6.12 253.56-13.26Q249.72-20.40 249.72-29.76L249.72-29.76ZM293.16-36.60Q292.56-41.76 288.90-45Q285.24-48.24 279.48-48.24L279.48-48.24Q273.60-48.24 269.82-45Q266.04-41.76 265.32-36.60L265.32-36.60L293.16-36.60ZM332.76-59.52L332.76-50.64L333.96-50.64Q338.64-60.48 352.32-60.48L352.32-60.48Q359.16-60.48 364.44-57.30Q369.72-54.12 372.60-48.48Q375.48-42.84 375.48-35.52L375.48-35.52L375.48 0L360.36 0L360.36-34.80Q360.36-41.52 357.12-44.88Q353.88-48.24 347.64-48.24L347.64-48.24Q340.68-48.24 336.84-43.62Q333-39 333-30.72L333-30.72L333 0L317.88 0L317.88-59.52L332.76-59.52ZM380.76-59.52L395.64-59.52L395.64-78L410.76-78L410.76-59.52L427.08-59.52L427.08-47.28L410.76-47.28L410.76-15.84Q410.76-12.24 414.12-12.24L414.12-12.24L425.64-12.24L425.64 0L408.84 0Q402.84 0 399.24-3.66Q395.64-7.32 395.64-13.44L395.64-13.44L395.64-47.28L380.76-47.28L380.76-59.52Z" class="lg-word"></path><g transform="translate(430.44000000000005,0)"><path d="M21.84-84L21.84 0L6.72 0L6.72-84L21.84-84ZM34.56-44.40Q36.96-51.84 43.50-56.52Q50.04-61.20 60.96-61.20L60.96-61.20Q72.84-61.20 79.62-55.26Q86.40-49.32 86.40-38.28L86.40-38.28L86.40 0L72 0L72-6.96L70.32-6.96Q69-3.84 65.22-1.08Q61.44 1.68 54.24 1.68L54.24 1.68Q44.76 1.68 38.58-3.42Q32.40-8.52 32.40-17.40L32.40-17.40Q32.40-26.28 38.70-31.14Q45-36 55.44-36L55.44-36L71.76-36L71.76-39.36Q71.76-43.80 69-46.50Q66.24-49.20 60.72-49.20L60.72-49.20Q55.32-49.20 52.32-46.62Q49.32-44.04 48.48-39.72L48.48-39.72L34.56-44.40ZM47.52-17.76Q47.52-14.52 50.10-12.54Q52.68-10.56 57.36-10.56L57.36-10.56Q63.72-10.56 67.74-14.22Q71.76-17.88 71.76-23.76L71.76-23.76L71.76-24.72L56.52-24.72Q52.32-24.72 49.92-22.80Q47.52-20.88 47.52-17.76L47.52-17.76ZM114.24-84L114.24-51.84L115.44-51.84Q122.04-61.20 134.88-61.20L134.88-61.20Q142.08-61.20 148.20-57.36Q154.32-53.52 158.04-46.32Q161.76-39.12 161.76-29.76L161.76-29.76Q161.76-20.40 158.04-13.20Q154.32-6 148.20-2.16Q142.08 1.68 134.88 1.68L134.88 1.68Q122.04 1.68 115.20-8.04L115.20-8.04L114.00-8.04L114.00 0L99.12 0L99.12-84L114.24-84ZM130.32-48.24Q123.12-48.24 118.56-43.32Q114.00-38.40 114.00-29.76L114.00-29.76Q114.00-21.12 118.56-16.20Q123.12-11.28 130.32-11.28L130.32-11.28Q137.52-11.28 142.08-16.20Q146.64-21.12 146.64-29.76L146.64-29.76Q146.64-38.40 142.08-43.32Q137.52-48.24 130.32-48.24L130.32-48.24ZM170.64-42.84Q170.64-51.48 177-56.34Q183.36-61.20 194.16-61.20L194.16-61.20Q203.88-61.20 210.36-56.82Q216.84-52.44 219.12-45L219.12-45L205.44-40.80Q203.52-49.68 194.16-49.68L194.16-49.68Q189.84-49.68 187.56-48.12Q185.28-46.56 185.28-43.80L185.28-43.80Q185.28-40.92 187.62-39.42Q189.96-37.92 194.88-36.96L194.88-36.96L198-36.36Q205.80-34.80 210.72-32.88Q215.64-30.96 218.58-27.36Q221.52-23.76 221.52-17.88L221.52-17.88Q221.52-8.64 214.80-3.48Q208.08 1.68 196.56 1.68L196.56 1.68Q184.80 1.68 177.42-3.36Q170.04-8.40 168.48-17.76L168.48-17.76L182.40-21.36Q184.44-9.84 196.56-9.84L196.56-9.84Q201.60-9.84 204.24-11.76Q206.88-13.68 206.88-16.68L206.88-16.68Q206.88-19.44 204.36-21.06Q201.84-22.68 196.08-23.76L196.08-23.76L192.96-24.36Q182.28-26.40 176.46-30.54Q170.64-34.68 170.64-42.84L170.64-42.84Z" class="lg-labs"></path></g></g></g></svg><span class="mark-sep" aria-hidden="true"></span><div><h1>Creators Hub</h1><small>Paid influencers &amp; UGC</small></div></div>
       <div class="hdr-actions">
         <button class="btn primary" id="btnAddCampaign" type="button">+ Book deal</button>
         <button class="btn" id="btnAddCreator" type="button" title="Onboard a new creator">+ Creator</button>
@@ -693,7 +781,7 @@ table.compact{min-width:760px}
       <button role="tab" data-tab="board" aria-selected="false">Leaderboard</button>
       <button role="tab" data-tab="campaigns" aria-selected="false">Deals<span class="count" id="nCamps"></span></button>
       <button role="tab" data-tab="playbook" aria-selected="false">Playbook</button>
-      <button role="tab" data-tab="admin" aria-selected="false" hidden>Activity &amp; team</button>
+      <button role="tab" data-tab="admin" aria-selected="false" hidden>Admin<span class="count hot" id="nAdmin"></span></button>
     </nav>
   </div>
 </header>
@@ -714,7 +802,7 @@ table.compact{min-width:760px}
     </div>
   </div>
   <form class="g-card" id="gForm" autocomplete="off">
-    <div class="g-pass"><span class="g-live"><i></i>LIVE</span><span class="g-tag">Backstage pass · Creator Hub</span></div>
+    <div class="g-pass"><span class="g-live"><i></i>LIVE</span><span class="g-tag">Backstage pass · Creators Hub</span></div>
     <h1 id="gTitle">Creators only<span class="g-dot">.</span></h1>
     <p class="g-sub">Where every collab hits <b id="gPct">0%</b></p>
     <label class="g-field g-user"><span class="sr">Username</span>
@@ -741,6 +829,15 @@ const BRANDS = [
   {key:"wingville", name:"Wingville", c:"var(--wing)"},
 ];
 const BNAME = Object.fromEntries(BRANDS.map(b=>[b.name,b.key]));
+const BUILTIN_BRANDS = BRANDS.length;
+const BRAND_PALETTE = ["#2F6FDE","#6B4FD8","#1E8A6E","#B8860B","#C2185B","#00838F","#8D6E63","#7CB342"];
+// Brands added by the admin live in settings/main.brands and are appended to the built-in list.
+function syncBrands(){
+  BRANDS.splice(BUILTIN_BRANDS);
+  for(const b of (S.settings?.brands||[])) if(b && b.key && b.name && !b.archived && !BRANDS.some(x=>x.key===b.key)) BRANDS.push({key:b.key, name:b.name, c:b.color||"var(--muted)", custom:true});
+  for(const k of Object.keys(BNAME)) delete BNAME[k];
+  BRANDS.forEach(b=>BNAME[b.name]=b.key);
+}
 const STATUSES = [
   {key:"worked", label:"Worked with"},
   {key:"interested", label:"Interested"},
@@ -785,7 +882,7 @@ async function write(fn, ok, log){
   if(!db){ toast("Not connected yet. Sign in first."); return false; }
   try{ await fn(); if(ok) toast(ok); if(log) logAct(log.act, log.summary, log.ref); return true; }
   catch(e){
-    if(e && e.code==="permission-denied"){ toast(isAdmin()?"The database refused this change. Check the security rules.":"Only the admin can do that."); }
+    if(e && e.code==="permission-denied"){ toast(isAdmin()?"The database refused this change. Check the security rules.":"Your role doesn't allow that. Ask the admin."); }
     else if(e && e.code==="resource-exhausted"){ toast("Today's free database limit is used up. Try again tomorrow, or ask Khaled."); }
     else { toast("Couldn't save. Check your connection and try again."); }
     return false;
@@ -815,6 +912,8 @@ function dealRange(k){
 
 const IMPORT_DATE = "2026-10-18"; // when the old sheet was imported; its numbers have no measured-on date
 const REELS_DAYS = 7, CODE_DAYS = 14;
+const resultsOpenOn = d => d ? iso(addDays(d, REELS_DAYS)) : null;     // reel results AND the reel link open on day 7
+const reelOpen = d => !!d && iso(TODAY) >= resultsOpenOn(d);
 // Each reel carries its own results. Old imported deals with several reels keep one combined set.
 function reelUnits(k){
   const reels = delivs(k).filter(d=>d.type==="Reel");
@@ -998,7 +1097,7 @@ async function boot(){
     const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); });
     S.campaigns=o; S.loaded.k=true; recompute(); render();
   }, e=>toast("Lost the live connection to campaigns. Reload the page.")));
-  unsubs.push(db.doc("settings/main").onSnapshot(s=>{ if(s.exists){ S.settings={cooldownWeeks:6, crossDays:14, ...s.data()}; recompute(); render(); } }));
+  unsubs.push(db.doc("settings/main").onSnapshot(s=>{ if(s.exists){ S.settings={cooldownWeeks:6, crossDays:14, ...s.data()}; syncBrands(); recompute(); render(); } }));
 }
 function fail(t){ $("#main").innerHTML = `<div class="notice">${esc(t||"Couldn't reach the database. Check your connection and reload.")}</div>`; }
 
@@ -1017,7 +1116,11 @@ function render(){
   if(S.tab==="guide") S.tab="playbook";
   if(!S.me) return;
   if(S.tab==="admin" && !isAdmin()) S.tab="find";
+  document.querySelectorAll("#tabs [data-tab]").forEach(b=>{ const p=TAB_PERM[b.dataset.tab]; if(p) b.hidden = !can(p); });
+  if(TAB_PERM[S.tab] && !can(TAB_PERM[S.tab])) S.tab = Object.keys(TAB_PERM).find(t=>can(TAB_PERM[t])) || "playbook";
   ({today:renderToday, find:renderFind, board:renderBoard, campaigns:renderCampaigns, followers:renderFollowers, playbook:renderPlaybook, admin:renderAdmin}[S.tab]||renderToday)();
+  const na=$("#nAdmin"); if(na) na.textContent = isAdmin() ? (adminAttentionCount() || "") : "";
+  maybeLatePopup();
 }
 
 const PLATFORMS = ["Instagram","TikTok","Facebook","YouTube"];
@@ -1312,7 +1415,9 @@ const BOARD_COLS = [
   {k:"brands", label:"Brands", v:r=>r.brands, text:true},
 ];
 function renderBoard(){
-  const ks = Object.entries(S.campaigns).map(([id,k])=>({id,k,m:campMetrics(k)}));
+  const BP = S.bPer ||= PER_DEF(), RG = periodRange(BP);
+  const keepId = id => { const k=S.campaigns[id]; return k && inRange(lastDate(k), RG); };
+  const ks = Object.entries(S.campaigns).filter(([id,k])=>k.status!=="Cancelled" && inRange(lastDate(k), RG)).map(([id,k])=>({id,k,m:campMetrics(k)}));
   const done = ks.filter(x=>x.m.cpm!=null);
   const spend = ks.reduce((a,x)=>a+(x.k.price||0),0);
   const views = done.reduce((a,x)=>a+x.k.views,0);
@@ -1320,14 +1425,15 @@ function renderBoard(){
   const spendDone = done.reduce((a,x)=>a+x.k.price,0);
   const orders = ks.reduce((a,x)=>a+(x.k.orders||0),0);
   const lg = S.league || "all";
-  const boardRowsFor = L => Object.keys(CSCORE).map(h=>({h, cs:leagueScoreOf(h, L)})).filter(r=>r.cs).sort((a,b)=>b.cs.score-a.cs.score).map((r,i)=>{
+  const scoped = cs => { if(!cs) return null; if(!RG) return cs; const ids=cs.ids.filter(keepId); return ids.length ? {...cs, ids, n:ids.length, score:Math.round(ids.reduce((a,id)=>a+SCORES[id],0)/ids.length)} : null; };
+  const boardRowsFor = L => Object.keys(CSCORE).map(h=>({h, cs:scoped(leagueScoreOf(h, L))})).filter(r=>r.cs).sort((a,b)=>b.cs.score-a.cs.score).map((r,i)=>{
     const mine = r.cs.ids.map(id=>S.campaigns[id]);
     const sp=mine.reduce((a,k)=>a+(k.price||0),0), v=mine.reduce((a,k)=>a+(k.views||0),0), sh=mine.reduce((a,k)=>a+(k.shares||0),0);
     const svs=mine.filter(k=>k.saves!=null), sv=svs.length?svs.reduce((a,k)=>a+k.saves,0):null;
     const last=mine.map(lastDate).filter(Boolean).sort().at(-1)||null;
     return {h:r.h, rank:i+1, score:r.cs.score, n:r.cs.n, sp, v, cpm:v&&sp?sp/v*1000:null, cps:sh&&sp?sp/sh:null, spv:v?sh/v:null, sv, last, lastS:last?fmtD(last):"—", brands:[...new Set(mine.map(k=>k.brand))].join(", ")};
   });
-  const boardTable = L => { const rows=boardRowsFor(L); if(!rows.length) return `<div class="t2-clear"><span>–</span><div><b>No scored ${L==="ugc"?"UGC":"paid"} deals yet.</b></div></div>`;
+  const boardTable = L => { const rows=boardRowsFor(L); if(!rows.length) return `<div class="t2-clear"><span>–</span><div><b>No scored ${L==="ugc"?"UGC":"paid"} deals ${RG?"with a latest post in "+esc(periodLabel(BP)):"yet"}.</b></div></div>`;
     return `<div class="tablewrap scrolly"><table>${theadHTML(BOARD_COLS, S.bSort, "bSort")}<tbody>${sortRows(rows, BOARD_COLS, S.bSort).map(r=>{ const [cls,lab]=verdict(r.score);
       return `<tr data-open="${esc(r.h)}"><td class="num">${r.rank}</td><td>${igLink(r.h)}${L==="ugc"&&ugcStar(r.h)?` <span class="starbadge">★ Try as paid</span>`:""}</td>
         <td><span class="bar-m" style="--sc:${scoreColor(r.score)}"><i style="width:${r.score}%"></i></span><span class="num">${r.score}</span> <span class="pill ${cls}">${lab}</span></td>
@@ -1335,22 +1441,24 @@ function renderBoard(){
         <td class="r num">${fmt$(r.cpm)}</td><td class="r num">${fmt$(r.cps)}</td><td class="r num">${pct(r.spv)}</td><td class="r num">${fmtN(r.sv)}</td>
         <td class="num">${esc(r.lastS)}</td><td>${esc(r.brands)}</td></tr>`; }).join("")}</tbody></table></div>`; };
   $("#main").innerHTML = `
+  <div class="boardtop"><div><h2>Results</h2><p class="lede">${RG?`Deals whose latest post falls in <b>${esc(periodLabel(BP))}</b>.`:"Every deal so far."} Filter by month, week or day.</p></div>${periodHTML(BP)}</div>
   <div class="kpis">
-    <div class="kpi"><div class="v">${fmt$(spend,0)}</div><div class="k">Agreed spend · ${ks.length} deals</div></div>
+    <div class="kpi"><div class="v">${fmt$(spend,0)}</div><div class="k">Agreed spend · ${ks.length} deal${ks.length!==1?"s":""}</div></div>
     <div class="kpi"><div class="v">${fmtN(views)}</div><div class="k">Reel views (${done.length} posted)</div></div>
     <div class="kpi"><div class="v">${fmt$(views?spendDone/views*1000:null)}</div><div class="k">Blended cost per 1K views</div></div>
     <div class="kpi"><div class="v">${fmt$(shares?spendDone/shares:null)}</div><div class="k">Blended cost per share</div></div>
     <div class="kpi"><div class="v">${orders?fmt$(spend/orders):"—"}</div><div class="k">${orders?`Cost per code use · ${orders} uses`:"Cost per code use · log promo-code uses"}</div></div>
   </div>
-  ${budgetsHTML()}
+  ${budgetsHTML(RG ? RG[0].slice(0,7) : thisMonth())}
   <div class="section">
-    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><h2>Creator leaderboard</h2>${leagueHTML()}</div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><h2>Creator leaderboard${RG?` <small class="per-tag">${esc(periodLabel(BP))}</small>`:""}</h2>${leagueHTML()}</div>
     <p class="lede">Paid and UGC deals are scored separately, so a creator who's done both has two scores. They're never mixed. <button class="linkbtn" type="button" data-guide>How scoring works</button></p>
     ${(()=>{ const n=leagueCounts(); const msg=[n.paid<PROVISIONAL_MIN?`Paid has ${n.paid} scored deal${n.paid!==1?"s":""}`:"", n.ugc<PROVISIONAL_MIN?`UGC has ${n.ugc}`:""].filter(Boolean); return msg.length?`<div class="provnote"><b>Early scores.</b> ${msg.join(", ")}. Scores are marked "early" until a group has ${PROVISIONAL_MIN} deals to compare, so treat them as a guide.</div>`:""; })()}
     ${lg==="all" ? `<h3 class="lb-h"><span class="pill reneg">Paid</span> Ranked against other paid deals</h3>${boardTable("paid")}<h3 class="lb-h"><span class="pill ugc">UGC</span> Ranked against other free deals</h3>${boardTable("ugc")}` : boardTable(lg)}
   </div>`;
   wireSort(BOARD_COLS, "bSort", renderBoard);
   wireLeague(renderBoard);
+  wirePeriod(BP, renderBoard);
   document.querySelector("[data-guide]")?.addEventListener("click",()=>{ S.tab="playbook"; render(); document.getElementById("pb-scoring")?.scrollIntoView({block:"start"}); });
   document.querySelectorAll("[data-open]").forEach(el=>el.onclick=()=>openCreator(el.dataset.open));
 }
@@ -1360,7 +1468,8 @@ function catBoost(c){ return c.category==="Food" ? 2 : c.category==="Comedy" || 
 const DUE_RANK = {due:0, waiting:1, nodates:2, noreel:2, done:3};
 const bcol = name => BRANDS.find(b=>b.name===name)?.c||"var(--line)";
 const DEAL_COLS = [
-  {k:"due", label:"Stage", core:1, v:r=>({due:0,live:1,booked:2,done:3,cancelled:4})[stageOf(r.k).key], def:"asc", cell:r=>`<td>${stageHTML(r.k)}</td>`},
+  {k:"due", label:"Stage", core:1, v:r=>({due:0,live:1,booked:2,done:3,cancelled:4})[stageOf(r.k).key], def:"asc", cell:r=>{ const L=lateDays(r.k); return `<td>${stageHTML(r.k)}${L>0?`<div><span class="latebadge">${L} day${L>1?"s":""} late</span></div>`:""}</td>`; }},
+  {k:"booked", label:"Deal day", core:1, v:r=>dealDay(r.id,r.k)||"", cell:r=>{ const d=dealDay(r.id,r.k); return `<td class="num">${d?esc(fmtD(d)):`<span class="hint" title="Imported from the sheet, booking date unknown">—</span>`}</td>`; }},
   {k:"last", label:"Latest post", core:1, v:r=>lastDate(r.k), cell:r=>`<td class="num"><b style="font-weight:600">${esc(fmtD(lastDate(r.k)))}</b>${lastReel(r.k)&&lastReel(r.k)!==lastDate(r.k)?`<div class="hint">last reel ${esc(fmtDs(lastReel(r.k)))}</div>`:""}</td>`},
   {k:"posts", label:"Posts", v:r=>delivs(r.k).length, cell:r=>`<td style="font-size:12.5px">${esc(dealCounts(r.k))}</td>`},
   {k:"h", label:"Creator", core:1, v:r=>r.k.handle, text:true, cell:r=>`<td>${igLink(r.k.handle)}${r.k.platform&&r.k.platform!=="Instagram"?`<div class="hint">${esc(r.k.platform)}</div>`:""}</td>`},
@@ -1381,12 +1490,14 @@ function renderCampaigns(){
   let rows = Object.entries(S.campaigns).map(([id,k])=>({id,k,m:campMetrics(k),s:SCORES[id],d:dueInfo(k)}));
   const nDue = rows.filter(r=>r.d?.state==="due").length;
   const DF = S.df ||= {q:"", brands:new Set(), stage:""};
+  const DP = S.dPer ||= PER_DEF(), DR = periodRange(DP);
   const nAll = rows.length;
   rows = rows.filter(r=>{
     const q = DF.q.trim().toLowerCase().replace(/^@/,"");
     if(q && !(r.k.handle.includes(q) || (r.k.name||"").toLowerCase().includes(q) || (r.k.promoCode||"").toLowerCase().includes(q))) return false;
     if(DF.brands.size && !DF.brands.has(r.k.brand)) return false;
     if(DF.stage && stageOf(r.k).key!==DF.stage) return false;
+    if(DR && !inRange(DP.by==="booked" ? dealDay(r.id, r.k) : lastDate(r.k), DR)) return false;
     const lgD = S.league || "all";
     if(lgD==="ugc" && r.k.price!==0) return false;
     if(lgD==="paid" && !(r.k.price>0)) return false;
@@ -1402,12 +1513,13 @@ function renderCampaigns(){
     <h2>Deals</h2>
     <p class="lede">One row per deal. Click a row to update dates, log results or see the score.</p>
     <div class="leaguebar">${leagueHTML()}</div>
+    ${periodHTML(DP, DR?`<label class="tb per-by"><span>Date by</span><select id="dBy" class="in"><option value="post" ${DP.by!=="booked"?"selected":""}>Latest post</option><option value="booked" ${DP.by==="booked"?"selected":""}>Deal day</option></select></label>`:"")}
     <div class="toolbar">
       <label class="tb tb-q"><span class="sr">Search deals</span><input id="dq" type="search" class="in" placeholder="Search @handle, name or promo code" value="${esc(DF.q)}"></label>
       <label class="tb"><span>Stage</span><select id="dstage" class="in">${[["","All stages"],["due","Results due"],["live","Live"],["booked","Booked"],["done","Done"],["cancelled","Cancelled"]].map(([v,l])=>`<option value="${v}" ${DF.stage===v?"selected":""}>${l}${v==="due"&&nDue?` (${nDue})`:""}</option>`).join("")}</select></label>
     </div>
     <div class="brandpick" role="group" aria-label="Filter by brand"><span class="bp-l">Brands</span>${BRANDS.map(b=>`<button type="button" class="bpk" data-bn="${esc(b.name)}" aria-pressed="${DF.brands.has(b.name)}" style="--bc:${b.c}"><i></i>${esc(b.name)}</button>`).join("")}${DF.brands.size?`<button type="button" class="linkbtn" id="dbAll">All brands</button>`:""}</div>
-    <div class="resultline"><b>${rows.length} of ${nAll} deal${nAll!==1?"s":""}</b>${nDue?`<button type="button" class="fpill due-pill" id="showDue">${nDue} need${nDue>1?"":"s"} results</button>`:""}${(DF.q||DF.brands.size||DF.stage)?`<button type="button" class="linkbtn" id="dClear">Clear filters</button>`:""}<button type="button" class="btn ghost colsbtn" id="dAll" aria-pressed="${!!S.dAll}">${S.dAll?"Fewer columns":"Show all metrics"}</button></div>
+    <div class="resultline"><b>${rows.length} of ${nAll} deal${nAll!==1?"s":""}</b>${nDue?`<button type="button" class="fpill due-pill" id="showDue">${nDue} need${nDue>1?"":"s"} results</button>`:""}${(DF.q||DF.brands.size||DF.stage||DR)?`<button type="button" class="linkbtn" id="dClear">Clear filters</button>`:""}<button type="button" class="btn ghost colsbtn" id="dAll" aria-pressed="${!!S.dAll}">${S.dAll?"Fewer columns":"Show all metrics"}</button></div>
     <div class="tablewrap scrolly"><table class="${S.dAll?"":"compact"}">
       ${theadHTML(cols, S.dSort, "dSort")}
       <tbody>${sortRows(rows, DEAL_COLS, S.dSort).map(r=>`<tr data-camp="${esc(r.id)}">${cols.map(c=>c.cell(r,mark)).join("")}</tr>`).join("") || `<tr style="cursor:default"><td colspan="${cols.length}"><div class="empty">${DF.brands.size===1&&!DF.q&&!DF.stage ? `No deals for ${esc([...DF.brands][0])} yet. <button type="button" class="btn primary" id="bookFirst">+ Book the first</button>` : `No deals match these filters. <button type="button" class="linkbtn" id="dClear2">Clear filters</button>`}</div></td></tr>`}</tbody>
@@ -1419,13 +1531,106 @@ function renderCampaigns(){
   document.querySelectorAll(".bpk").forEach(b=>b.onclick=()=>{ const n=b.dataset.bn; DF.brands.has(n)?DF.brands.delete(n):DF.brands.add(n); renderCampaigns(); });
   $("#dbAll")?.addEventListener("click",()=>{ DF.brands.clear(); renderCampaigns(); });
   $("#showDue")?.addEventListener("click",()=>{ DF.stage="due"; renderCampaigns(); });
-  $("#dClear")?.addEventListener("click",()=>{ S.df={q:"", brands:new Set(), stage:""}; renderCampaigns(); });
+  $("#dClear")?.addEventListener("click",()=>{ S.df={q:"", brands:new Set(), stage:""}; S.dPer=PER_DEF(); renderCampaigns(); });
+  wirePeriod(DP, renderCampaigns);
+  $("#dBy")?.addEventListener("change",e=>{ DP.by=e.target.value; renderCampaigns(); });
   $("#dClear2")?.addEventListener("click",()=>{ S.df={q:"", brands:new Set(), stage:""}; renderCampaigns(); });
   $("#dAll").onclick=()=>{ S.dAll=!S.dAll; renderCampaigns(); };
   $("#bookFirst")?.addEventListener("click",()=>openCampaign(null, null, false, [...DF.brands][0]));
   wireSort(DEAL_COLS, "dSort", renderCampaigns);
   document.querySelectorAll("[data-camp]").forEach(el=>el.onclick=()=>openCampaign(el.dataset.camp));
 }
+
+
+/* ---------- Deal day, late results, periods, budgets ---------- */
+const dealDay = (id,k) => k.bookedOn || (/^c[0-9a-z]{8,}$/.test(id||"") ? (()=>{ const t=parseInt(id.slice(1),36); return t>1.6e12 && t<2.2e12 ? iso(new Date(t)) : null; })() : null);
+// Everything that is past its collection day and still missing: reel results, reel links, code uses.
+function lateItems(){
+  const today=iso(TODAY), out=[];
+  for(const [id,k] of Object.entries(S.campaigns)){
+    const di=dueInfo(k); if(!di || !di.units) continue;
+    for(const x of di.units) if(x.s==="due" && today>x.due) out.push({id,k,kind:"reel",date:x.u.date,due:x.due,late:daysBetween(x.due,today)});
+    if(di.c==="due" && today>di.codeDue) out.push({id,k,kind:"code",due:di.codeDue,late:daysBetween(di.codeDue,today)});
+    if(!k.importedFromSheet) for(const d of delivs(k)) if(d.type==="Reel" && !d.url && today>resultsOpenOn(d.date)) out.push({id,k,kind:"link",date:d.date,due:resultsOpenOn(d.date),late:daysBetween(resultsOpenOn(d.date),today)});
+  }
+  return out.sort((a,b)=>b.late-a.late);
+}
+function lateDays(k){ const today=iso(TODAY), di=dueInfo(k); if(!di||!di.units) return 0;
+  let m=0; for(const x of di.units) if(x.s==="due" && today>x.due) m=Math.max(m,daysBetween(x.due,today));
+  if(di.c==="due" && today>di.codeDue) m=Math.max(m,daysBetween(di.codeDue,today)); return m; }
+const LATE_LABEL = {reel:"Reel results", link:"Reel link", code:"Code uses"};
+function maybeLatePopup(){
+  if(!S.me || !S.loaded.k || maybeLatePopup.done) return;
+  maybeLatePopup.done = true;
+  const items = lateItems(); if(!items.length) return;
+  const key = "ch_late_"+S.me.username, today = iso(TODAY);
+  try{ if(localStorage.getItem(key)===today) return; localStorage.setItem(key, today); }catch(e){}
+  const byDeal = {}; items.forEach(x=>{ (byDeal[x.id] ||= []).push(x); });
+  const root = document.createElement("div"); root.className="late-modal"; root.setAttribute("role","dialog"); root.setAttribute("aria-modal","true"); root.setAttribute("aria-labelledby","lateT");
+  root.innerHTML = `<div class="lm-card">
+    <div class="lm-h"><span class="lm-ic" aria-hidden="true">!</span><div><h2 id="lateT">${items.length} late submission${items.length>1?"s":""}</h2><p>These passed their collection day and still aren't logged. Late numbers make the scores less fair, so please collect them today.</p></div></div>
+    <div class="lm-list">${Object.entries(byDeal).map(([id,xs])=>{ const k=xs[0].k; return `<div class="lm-row"><div class="lm-who"><b>@${esc(k.handle)}</b><small><i class="dot" style="background:${bcol(k.brand)}"></i>${esc(k.brand)}</small></div>
+      <div class="lm-what">${xs.map(x=>`<span><b>${esc(LATE_LABEL[x.kind])}</b>${x.date?` · reel of ${esc(fmtDs(x.date))}`:""} <em>${x.late} day${x.late>1?"s":""} late</em></span>`).join("")}</div>
+      <button type="button" class="btn sm primary" data-lm="${esc(id)}">Log it</button></div>`; }).join("")}</div>
+    <div class="lm-f"><span class="hint">Shown once a day while anything is late.</span><button type="button" class="btn" id="lmClose">Later</button></div></div>`;
+  document.body.appendChild(root);
+  const close = () => { root.remove(); document.removeEventListener("keydown", esc_); };
+  const esc_ = e => { if(e.key==="Escape") close(); };
+  document.addEventListener("keydown", esc_);
+  root.addEventListener("click", e=>{ if(e.target===root) close(); });
+  root.querySelector("#lmClose").onclick = close;
+  root.querySelectorAll("[data-lm]").forEach(b=>b.onclick=()=>{ close(); openCampaign(b.dataset.lm); });
+  setTimeout(()=>root.querySelector("[data-lm]")?.focus(), 30);
+}
+
+// Period filter shared by the Leaderboard and Deals: all time (default), month, week or a single day.
+const PER_DEF = () => ({mode:"all", anchor: iso(TODAY), by:"post"});
+function periodRange(P){
+  if(!P || P.mode==="all") return null; const a=P.anchor;
+  if(P.mode==="day") return [a,a];
+  if(P.mode==="week"){ const dow=(new Date(a+"T00:00:00").getDay()+6)%7; const st=iso(addDays(a,-dow)); return [st, iso(addDays(st,6))]; }
+  const y=+a.slice(0,4), m=+a.slice(5,7); return [a.slice(0,7)+"-01", iso(new Date(y, m, 0))];
+}
+const inRange = (d, R) => !R || (!!d && d>=R[0] && d<=R[1]);
+function periodLabel(P){ const r=periodRange(P); if(!r) return "All time";
+  if(P.mode==="day") return fmtD(r[0]); if(P.mode==="month") return monthName(r[0].slice(0,7));
+  return `${fmtDs(r[0])} – ${fmtD(r[1])}`; }
+function shiftPeriod(P, dir){ const a=P.anchor;
+  if(P.mode==="day") P.anchor=iso(addDays(a,dir)); else if(P.mode==="week") P.anchor=iso(addDays(a,7*dir));
+  else { const d=new Date(+a.slice(0,4), +a.slice(5,7)-1+dir, 1); P.anchor=iso(d); } }
+function periodHTML(P, extra){
+  const modes=[["all","All time"],["month","Month"],["week","Week"],["day","Day"]];
+  const r=periodRange(P);
+  return `<div class="per">
+    <div class="league" role="group" aria-label="Period">${modes.map(([v,l])=>`<button type="button" data-pmode="${v}" aria-pressed="${P.mode===v}">${l}</button>`).join("")}</div>
+    ${r?`<div class="per-nav"><button type="button" class="btn ghost per-b" data-pnav="-1" aria-label="Previous ${P.mode}">‹</button>
+      <label class="per-l"><b>${esc(periodLabel(P))}</b><input class="per-in" type="${P.mode==="month"?"month":"date"}" value="${esc(P.mode==="month"?P.anchor.slice(0,7):P.anchor)}" aria-label="Pick the ${P.mode}"></label>
+      <button type="button" class="btn ghost per-b" data-pnav="1" aria-label="Next ${P.mode}">›</button>
+      <button type="button" class="linkbtn" data-pnow>${P.mode==="day"?"Today":"This "+P.mode}</button></div>`:""}
+    ${extra||""}
+  </div>`;
+}
+function wirePeriod(P, rerender){
+  document.querySelectorAll("[data-pmode]").forEach(b=>b.onclick=()=>{ if(P.mode!==b.dataset.pmode){ P.mode=b.dataset.pmode; P.anchor=iso(TODAY); } rerender(); });
+  document.querySelectorAll("[data-pnav]").forEach(b=>b.onclick=()=>{ shiftPeriod(P, +b.dataset.pnav); rerender(); });
+  document.querySelector("[data-pnow]")?.addEventListener("click",()=>{ P.anchor=iso(TODAY); rerender(); });
+  document.querySelector(".per-in")?.addEventListener("change",e=>{ const v=e.target.value; if(!v) return; P.anchor = v.length===7 ? v+"-01" : v; rerender(); });
+}
+
+// Budgets: a plan that applies "from this month on", plus optional one-month overrides.
+function budgetFor(bk, ym){
+  const ov = S.settings.budgetMonths?.[ym]; if(ov && Object.prototype.hasOwnProperty.call(ov, bk)) return ov[bk];
+  if(ym < BUDGET_START && !(S.settings.budgetMonths?.[ym])) return null;
+  const plan = (S.settings.budgetPlan||[]).filter(p=>p.from<=ym).sort((a,b)=>a.from.localeCompare(b.from)).at(-1);
+  if(plan) return plan.b?.[bk] ?? null;
+  if((S.settings.budgetPlan||[]).length) return null;
+  return ym >= BUDGET_START ? ((S.settings.budgets||{})[bk] ?? null) : null;
+}
+const BUDGET_START = "2026-10";   // budgets were first set in the Hub in October 2026
+const companyBudget = ym => { const v=BRANDS.map(b=>budgetFor(b.key,ym)).filter(x=>x!=null); return v.length ? v.reduce((a,x)=>a+x,0) : null; };
+const companySpend = ym => BRANDS.reduce((a,b)=>a+brandSpend(b.key, ym), 0);
+const addMonths = (ym, n) => { const d=new Date(+ym.slice(0,4), +ym.slice(5,7)-1+n, 1); return iso(d).slice(0,7); };
+const monthsBetween = (a, b) => { const out=[]; let m=a; let guard=0; while(m<=b && guard++<60){ out.push(m); m=addMonths(m,1); } return out; };
 
 /* ---------- Business rules added in the QC round ---------- */
 const FOLLOWUP_DAYS = 5, PROVISIONAL_MIN = 10;
@@ -1468,7 +1673,7 @@ function todayData(){
   const fu = followUps();
   const week=[]; for(const [id,k] of Object.entries(S.campaigns)){ if(k.status==="Cancelled") continue; for(const d of delivs(k)) if(d.date>=today && d.date<=wk) week.push({id,k,d}); }
   week.sort((a,b)=>a.d.date.localeCompare(b.d.date));
-  const noLink=[]; for(const [id,k] of Object.entries(S.campaigns)){ if(k.status==="Cancelled") continue; for(const d of delivs(k)) if(d.type==="Reel" && d.date<=today && d.date>=iso(addDays(today,-14)) && !d.url) noLink.push({id,k,d}); }
+  const noLink=[]; for(const [id,k] of Object.entries(S.campaigns)){ if(k.status==="Cancelled") continue; for(const d of delivs(k)) if(d.type==="Reel" && reelOpen(d.date) && d.date>=iso(addDays(today,-21)) && !d.url) noLink.push({id,k,d}); }
   const active = Object.values(S.creators).filter(activeCreator);
   const staleF = active.filter(c=>daysSince(c.followersUpdated)>31);
   const generic = Object.values(S.creators).filter(c=>!c.dnb && c.category==="General creator");
@@ -1520,7 +1725,7 @@ function renderToday(){
       ${sel.posts.length ? `<div class="t2-list">${sel.posts.map(({id,k,d})=>`<div class="t2-item">
           <span class="t2-tag ${d.type==="Reel"?"reel":"story"}">${esc(d.type)}</span>
           <div class="t2-main"><b>@${esc(k.handle)}</b><small>${bdot(k.brand)}${esc(k.brand)}${d.url?" · link added":""}</small></div>
-          <button type="button" class="btn sm" data-deal="${esc(id)}">${d.type==="Reel" && d.date<=D.today && !d.url?"Add the link":"Open deal"}</button></div>`).join("")}</div>`
+          <button type="button" class="btn sm" data-deal="${esc(id)}">${d.type==="Reel" && reelOpen(d.date) && !d.url?"Add the link":"Open deal"}</button></div>`).join("")}</div>`
         : `<p class="t2-empty">No posts planned for ${selDay===D.today?"today":esc(fmtD(selDay))}.${D.week.length?"":" Nothing planned in the next 7 days."}</p>`}
     </section>` : ""}
 
@@ -1612,38 +1817,89 @@ async function setBrandStatus(h, bk, v){
 }
 
 /* ---------- Spend vs budget ---------- */
-function budgetsHTML(){
-  const ym = thisMonth(); const B = S.settings.budgets || {};
-  const rows = BRANDS.map(b=>({b, spent:brandSpend(b.key, ym), budget:B[b.key]??null}));
+function budgetsHTML(ym){
+  ym = ym || thisMonth();
+  const rows = BRANDS.map(b=>({b, spent:brandSpend(b.key, ym), budget:budgetFor(b.key, ym)}));
   const anyBudget = rows.some(r=>r.budget!=null);
   return `<div class="section">
     <h2>Spend · ${esc(monthName(ym))}</h2>
-    <p class="lede">Agreed deal prices, counted in the month of each deal's first post.${anyBudget?"":" No monthly budgets set yet. The admin sets them in Activity &amp; team."}</p>
+    <p class="lede">Agreed deal prices, counted in the month of each deal's first post.${anyBudget?"":" No monthly budgets set yet. The admin sets them in Admin → Rules &amp; budgets."}</p>
     <div class="budgets">${rows.map(({b,spent,budget})=>{ const p = budget ? Math.min(100, spent/budget*100) : 0, over = budget!=null && spent>budget;
       return `<div class="bud ${over?"over":""}"><div class="bud-h"><i class="dot" style="background:${b.c}"></i><b>${esc(b.name)}</b><span class="num">${fmt$(spent,0)}${budget!=null?` <small>of ${fmt$(budget,0)}</small>`:""}</span></div>
         ${budget!=null?`<div class="bud-bar"><span style="width:${p}%;background:${over?"var(--bad)":b.c}"></span></div><small class="bud-s">${over?`${fmt$(spent-budget,0)} over budget`:`${fmt$(budget-spent,0)} left`}</small>`:`<small class="bud-s">No budget set</small>`}</div>`;}).join("")}</div>
   </div>`;
 }
+const saveSettings = (patch, ok, summary) => write(()=>db.doc("settings/main").set({...S.settings, ...patch}), ok, {act:"settings", summary});
 function rulesHTML(){
-  const B = S.settings.budgets || {};
-  return `<h3 class="pb-h" style="margin-top:22px">Rules &amp; budgets</h3>
-  <div class="rules-card">
-    <label class="rc-row"><span>Rest before the <b>same brand</b> books a creator again</span><span><input id="cdw" class="in" type="number" min="0" max="52" value="${esc(S.settings.cooldownWeeks??6)}"> weeks</span></label>
-    <label class="rc-row"><span>Rest before <b>any other brand</b> books them</span><span><input id="cxd" class="in" type="number" min="0" max="90" value="${esc(S.settings.crossDays??14)}"> days</span></label>
-    <div class="rc-sub">Monthly budget per brand (USD)</div>
-    ${BRANDS.map(b=>`<label class="rc-row"><span><i class="dot" style="background:${b.c}"></i> ${esc(b.name)}</span><span>$ <input class="in" data-budget="${b.key}" type="number" min="0" step="10" placeholder="none" value="${esc(B[b.key]??"")}"></span></label>`).join("")}
-    <p class="hint" style="margin:0">Only the admin can change these. Changes save when you leave the box.</p>
-  </div>`;
+  const ym = thisMonth();
+  const custom = S.settings.brands || [];
+  return `<div class="adm-cols">
+  <section class="adm-card">
+    <h3 class="pb-h">Rest periods</h3>
+    <div class="rules-card">
+      <label class="rc-row"><span>Rest before the <b>same brand</b> books a creator again</span><span><input id="cdw" class="in" type="number" min="0" max="52" value="${esc(S.settings.cooldownWeeks??6)}"> weeks</span></label>
+      <label class="rc-row"><span>Rest before <b>any other brand</b> books them</span><span><input id="cxd" class="in" type="number" min="0" max="90" value="${esc(S.settings.crossDays??14)}"> days</span></label>
+      <p class="hint" style="margin:0">Changes save when you leave the box.</p>
+    </div>
+    <h3 class="pb-h" style="margin-top:22px">Monthly budget per brand</h3>
+    <div class="rules-card">
+      <div class="rc-sub" style="margin-top:0">From ${esc(monthName(ym))} on (USD)</div>
+      ${BRANDS.map(b=>`<label class="rc-row"><span><i class="dot" style="background:${b.c}"></i> ${esc(b.name)}</span><span>$ <input class="in" data-budget="${b.key}" type="number" min="0" step="10" placeholder="none" value="${esc(budgetFor(b.key, ym)??"")}"></span></label>`).join("")}
+      <div class="rc-row rc-total"><span>Company total</span><b class="num">${fmt$(companyBudget(ym),0)}</b></div>
+      <p class="hint" style="margin:0">Applies from this month onwards. Past months keep the budget they had, so the report stays accurate. To change one month only, use <button type="button" class="linkbtn" data-adtab-go="report">Budget report</button>.</p>
+    </div>
+  </section>
+  <section class="adm-card">
+    <h3 class="pb-h">Brands</h3>
+    <div class="brandlist">${BRANDS.map(b=>`<div class="bl-row"><i class="dot" style="background:${b.c}"></i><b>${esc(b.name)}</b>${b.custom?`<input type="color" class="bl-col" data-bcol="${esc(b.key)}" value="${esc(/^#[0-9a-f]{6}$/i.test(b.c)?b.c:"#888888")}" aria-label="${esc(b.name)} colour"><button type="button" class="linkbtn danger" data-barch="${esc(b.key)}">Remove</button>`:`<span class="hint">built in</span>`}</div>`).join("")}</div>
+    <div class="addbrand-card">
+      <div class="rc-sub" style="margin-top:0">Onboard a new brand</div>
+      <div class="ab-row"><label class="field"><span>Brand name</span><input id="nbName" class="in" type="text" placeholder="e.g. Green Bowl" maxlength="40"></label>
+        <label class="field ab-col"><span>Colour</span><input id="nbCol" type="color" value="${BRAND_PALETTE[custom.length % BRAND_PALETTE.length]}"></label>
+        <button type="button" class="btn primary" id="nbAdd">Add brand</button></div>
+      <p class="hint" style="margin:0">The new brand shows up everywhere straight away: booking, filters, outreach status, budgets and reports. Removing a brand hides it from new bookings; its past deals stay.</p>
+    </div>
+  </section></div>`;
 }
-function wireRules(){
-  $("#cdw")?.addEventListener("change", e=>{ const n=Math.max(0,Math.min(52,parseInt(e.target.value)||0)); write(()=>db.doc("settings/main").set({...S.settings, cooldownWeeks:n}), `Same-brand rest set to ${n} weeks`, {act:"settings", summary:`Same-brand rest: ${S.settings.cooldownWeeks??6} → ${n} weeks`}); });
-  $("#cxd")?.addEventListener("change", e=>{ const n=Math.max(0,Math.min(90,parseInt(e.target.value)||0)); write(()=>db.doc("settings/main").set({...S.settings, crossDays:n}), `Rest between brands set to ${n} days`, {act:"settings", summary:`Rest between brands: ${S.settings.crossDays??14} → ${n} days`}); });
+function wireRules(rerender){
+  $("#cdw")?.addEventListener("change", e=>{ const n=Math.max(0,Math.min(52,parseInt(e.target.value)||0)); saveSettings({cooldownWeeks:n}, `Same-brand rest set to ${n} weeks`, `Same-brand rest: ${S.settings.cooldownWeeks??6} → ${n} weeks`); });
+  $("#cxd")?.addEventListener("change", e=>{ const n=Math.max(0,Math.min(90,parseInt(e.target.value)||0)); saveSettings({crossDays:n}, `Rest between brands set to ${n} days`, `Rest between brands: ${S.settings.crossDays??14} → ${n} days`); });
   document.querySelectorAll("[data-budget]").forEach(i=>i.addEventListener("change", ()=>{
-    const bk=i.dataset.budget, name=BRANDS.find(b=>b.key===bk).name, v=i.value===""?null:Math.max(0,Number(i.value));
-    const old=S.settings.budgets?.[bk]??null; const budgets={...(S.settings.budgets||{})}; if(v==null) delete budgets[bk]; else budgets[bk]=v;
-    write(()=>db.doc("settings/main").set({...S.settings, budgets}), `${name} budget ${v==null?"removed":`set to ${fmt$(v,0)}`}`, {act:"settings", summary:`${name} monthly budget: ${old==null?"none":fmt$(old,0)} → ${v==null?"none":fmt$(v,0)}`});
-    S.settings.budgets=budgets;
+    const ym=thisMonth(), bk=i.dataset.budget, name=BRANDS.find(b=>b.key===bk).name, v=i.value===""?null:Math.max(0,Number(i.value));
+    const old=budgetFor(bk, ym);
+    const cur = {}; BRANDS.forEach(b=>{ const x=budgetFor(b.key, ym); if(x!=null) cur[b.key]=x; }); if(v==null) delete cur[bk]; else cur[bk]=v;
+    let plan = (S.settings.budgetPlan||[]).filter(p=>p.from!==ym);
+    if(!(S.settings.budgetPlan||[]).length && Object.keys(S.settings.budgets||{}).length) plan.push({from:BUDGET_START, b:{...S.settings.budgets}});   // keep the old budget for past months
+    plan.push({from:ym, b:cur}); plan.sort((a,b)=>a.from.localeCompare(b.from));
+    saveSettings({budgets:cur, budgetPlan:plan}, `${name} budget ${v==null?"removed":`set to ${fmt$(v,0)}`} from ${monthName(ym)}`, `${name} monthly budget from ${monthName(ym)}: ${old==null?"none":fmt$(old,0)} → ${v==null?"none":fmt$(v,0)}`);
+    S.settings.budgets=cur; S.settings.budgetPlan=plan;
   }));
+  $("#nbAdd")?.addEventListener("click", async ()=>{
+    const name=($("#nbName").value||"").trim().replace(/\s+/g," "); const color=$("#nbCol").value;
+    if(name.length<2){ toast("Type the brand's name."); $("#nbName").focus(); return; }
+    const key=name.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g,"");
+    if(!key){ toast("Use letters or numbers in the brand name."); return; }
+    const all=S.settings.brands||[];
+    const clash = BRANDS.find(b=>b.key===key || b.name.toLowerCase()===name.toLowerCase());
+    const archived = all.find(b=>b.key===key && b.archived);
+    if(clash){ toast(`${clash.name} is already a brand.`); return; }
+    const brands = archived ? all.map(b=>b.key===key?{...b, name, color, archived:false}:b) : [...all, {key, name, color, addedOn:iso(TODAY), addedBy:S.me?.name||""}];
+    if(await saveSettings({brands}, `${name} added as a brand`, `Added a new brand: ${name}`)){ S.settings.brands=brands; syncBrands(); rerender(); }
+  });
+  document.querySelectorAll("[data-bcol]").forEach(i=>i.addEventListener("change", async ()=>{
+    const brands=(S.settings.brands||[]).map(b=>b.key===i.dataset.bcol?{...b, color:i.value}:b);
+    if(await saveSettings({brands}, "Brand colour saved", `Changed the colour of ${BRANDS.find(b=>b.key===i.dataset.bcol)?.name}`)){ S.settings.brands=brands; syncBrands(); rerender(); }
+  }));
+  document.querySelectorAll("[data-barch]").forEach(btn=>btn.onclick=()=>{
+    const key=btn.dataset.barch, name=BRANDS.find(b=>b.key===key)?.name;
+    const n = Object.values(S.campaigns).filter(k=>k.brand===name).length;
+    const row = btn.closest(".bl-row"); if(row.querySelector(".bl-confirm")) return;
+    row.insertAdjacentHTML("beforeend", `<span class="bl-confirm">Remove ${esc(name)}?${n?` Its ${n} deal${n>1?"s":""} stay.`:""} <button type="button" class="btn sm danger">Remove</button> <button type="button" class="btn sm">Keep</button></span>`);
+    const [yes,no] = row.querySelectorAll(".bl-confirm button");
+    no.onclick=()=>row.querySelector(".bl-confirm").remove();
+    yes.onclick=async()=>{ const brands=(S.settings.brands||[]).map(b=>b.key===key?{...b, archived:true}:b);
+      if(await saveSettings({brands}, `${name} removed`, `Removed the brand ${name}`)){ S.settings.brands=brands; syncBrands(); rerender(); } };
+  });
 }
 
 /* Playbook */
@@ -1689,14 +1945,14 @@ function renderPlaybook(){
     {t:"Reach out", d:"Message them on WhatsApp or Instagram.", where:"WhatsApp / Instagram", list:["Ask for their price in USD for each package","Ask for a phone number","Already in the Hub? Mark them <b>Contacted, waiting</b>. After 5 days they show up on <b>Today</b>: swipe right if interested, left if not, or tap <b>Nudged again</b>"]},
     {t:"Onboard", d:"Got their info? Add them to the Hub.", where:"+ Add creator", list:["Just 3 things: username (or paste their profile link), Instagram followers as the <b>full number</b> (45200, not 45.2k), and category","Add phone, other platforms, quoted prices (USD) or notes only if you have them","After saving, tap the brand you reached out for to mark them <b>Contacted</b>"]},
     {t:"Book", d:"Agreed? Lock the deal so nobody changes it by mistake.", where:"Profile → + Book deal", list:["Pick one of their prices, or type the agreed one. Leave <b>Save to their prices</b> ticked so their prices stay current","Choose brand and platform. Check the brand's monthly budget shown under the price","Add a promo code if you can. Each code can only be used once","Add planned dates for every reel and story"]},
-    {t:"Post", d:"Make sure everything goes live as agreed.", where:"Deals tab", list:["<b>Today</b> lists what goes live this week","Paste each reel's <b>link</b> once it's up. Stories expire, so they don't need one","A date moved? Update it in the deal"]},
+    {t:"Post", d:"Make sure everything goes live as agreed.", where:"Deals tab", list:["<b>Today</b> lists what goes live this week","Add each reel's <b>link</b> on <b>day 7</b>, together with its results. Stories expire, so they don't need one","A date moved? Update it in the deal"]},
     {t:"Results", d:"The Deals tab turns red when it's time.", where:"Deals → Results due", list:["Each reel: views, shares, saves on <b>day 7</b>","Story views if the creator shares them","Check <b>Posted on time</b> (it's pre-filled)","Code uses on <b>day 14</b>"]},
     {t:"Learn", d:"Let the scores decide who to book again.", where:"Leaderboard", list:["<b>65+</b> rebook","<b>40–64</b> renegotiate","<b>Under 40</b> drop"]},
   ];
   const rules = [
     {n:`${wk} weeks`, t:"before the same brand books a creator again"},
     {n:`${xd} days`, t:"before any other Percent Labs brand books them"},
-    {n:"7 days", t:"after each reel, collect its views, shares and saves"},
+    {n:"Day 7", t:"after each reel: its link, views, shares and saves. Not before; late ones pop up every morning"},
     {n:"14 days", t:"after the last reel, count promo code uses"},
     {n:"48 hours", t:"to grab story views, if the creator shares them"},
     {n:"USD only", t:"every price and deal is in dollars. Anything else goes in notes"},
@@ -1706,7 +1962,7 @@ function renderPlaybook(){
   $("#main").innerHTML = `
   <div class="pb">
     <section class="pb-hero">
-      <h2>Creator Hub playbook</h2>
+      <h2>Creators Hub playbook</h2>
       <p>One place to find creators, book them, and learn who brings the best results for our brands.</p>
       <div class="pb-tabs">
         <div><b>Today</b><span>What needs doing right now, and follow-ups to swipe through</span></div>
@@ -1831,8 +2087,8 @@ function renderFollowers(){
 /* ---------- Drawers ---------- */
 function closeDrawer(){ $("#drawerRoot").innerHTML=""; document.removeEventListener("keydown", escClose); }
 function escClose(e){ if(e.key==="Escape") closeDrawer(); }
-function drawer(html){
-  $("#drawerRoot").innerHTML = `<div class="scrim" id="scrim"></div><aside class="drawer" role="dialog" aria-modal="true">${html}</aside>`;
+function drawer(html, kind, isNew){
+  $("#drawerRoot").innerHTML = `<div class="scrim" id="scrim"></div><aside class="drawer" role="dialog" aria-modal="true" data-kind="${kind||""}" ${isNew?'data-isnew="1"':""}>${html}</aside>`;
   $("#scrim").onclick=closeDrawer; document.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeDrawer);
   document.addEventListener("keydown", escClose);
   $(".drawer input, .drawer select")?.focus({preventScroll:true});
@@ -2055,7 +2311,7 @@ function openCreator(h, isNew, editing){
     </div>
     <div class="dfoot">
       ${!isNew && !edit && !c.dnb?`<button class="btn primary" type="button" id="logBtn">+ Book deal</button><button class="btn ghost danger" type="button" id="dnbBtn">Do not book</button>`:""}
-      ${!isNew && edit && isAdmin()?`<button class="btn danger" type="button" id="delBtn">Delete creator</button>`:""}
+      ${!isNew && edit && can("delCreator")?`<button class="btn danger" type="button" id="delBtn">Delete creator</button>`:""}
       <span class="sp"></span>
       ${edit?`<button class="btn ghost" type="button" id="cancelEdit">Cancel</button><button class="btn primary" type="button" id="saveBtn">${isNew?"Onboard creator":"Save details"}</button>`:`<button class="btn ghost" type="button" data-close>Close</button>`}
     </div>`);
@@ -2096,7 +2352,7 @@ function openCreator(h, isNew, editing){
     const doc = {...c, handle, name:$("#e_name").value.trim(), category:$("#e_cat").value, league:$("#e_lg")?.value||"", phone: phn ? {cc:$("#e_cc").value, num:phn} : null, platforms:plats, platform:Object.keys(plats).join(" + "),
       followers:f, followersUpdated: f!==c.followers && f!=null ? today : (c.followersUpdated||""), history:newHist,
       packages:pk, rateStory:null, rateReel:null, rateNote:"", notes:($("#e_notes")?.value||"").trim(),
-      addedFrom: c.addedFrom || "Creator Hub", onboardedOn: c.onboardedOn || today};
+      addedFrom: c.addedFrom || "Creators Hub", onboardedOn: c.onboardedOn || today};
     if(isNew){ doc.brands = {}; doc.brandsAt = {}; }
     const FIELDS = {name:"name", category:"category", platforms:"platforms & followers", packages:"prices", phone:"phone", league:"creator type", notes:"notes"};
     const changed = isNew ? [] : Object.entries(FIELDS).filter(([f])=>JSON.stringify(c[f]??null)!==JSON.stringify(doc[f]??null)).map(([,l])=>l);
@@ -2147,12 +2403,19 @@ const derivedStatus = k => { const s=stageOf(k).key; return s==="cancelled"?"Can
 
 const newUid = () => "p"+Math.random().toString(36).slice(2,9);
 function deliverableRow(d, i){
-  return `<div class="dl ${d.type==="Story"?"is-story":""}" data-i="${i}" data-uid="${esc(d.uid||newUid())}">
+  const lockUrl = d.type!=="Story" && !reelOpen(d.date);
+  return `<div class="dl ${d.type==="Story"?"is-story":""} ${lockUrl?"url-locked":""}" data-i="${i}" data-uid="${esc(d.uid||newUid())}">
     <select class="in dl-type" aria-label="Post type"><option ${d.type==="Reel"?"selected":""}>Reel</option><option ${d.type==="Story"?"selected":""}>Story</option></select>
     <input class="in dl-date" type="date" min="2024-01-01" max="2030-12-31" value="${esc(d.date||"")}" aria-label="Posting date">
-    <input class="in dl-url" type="url" inputmode="url" placeholder="Reel link, once it's live" value="${esc(d.url||"")}" aria-label="Link to the reel"><span class="dl-nolink">No link for stories</span>
+    <input class="in dl-url" type="url" inputmode="url" placeholder="${lockUrl?esc(urlLockText(d.date)):"Reel link"}" value="${esc(d.url||"")}" aria-label="Link to the reel" ${lockUrl?"readonly":""}><span class="dl-nolink">No link for stories</span>
     ${d.url&&d.type!=="Story"?`<a class="plink dl-open" href="${esc(d.url)}" target="_blank" rel="noopener" title="Open the post">↗</a>`:`<span class="dl-open"></span>`}
     <button class="btn ghost dl-x" type="button" aria-label="Remove this post">✕</button></div>`;
+}
+function urlLockText(date){ return date ? `Link opens ${fmtDs(resultsOpenOn(date))} (day ${REELS_DAYS})` : `Link opens ${REELS_DAYS} days after posting`; }
+function updUrlLock(row){
+  if(!row) return; const type=row.querySelector(".dl-type").value, date=row.querySelector(".dl-date").value, u=row.querySelector(".dl-url");
+  const lock = type!=="Story" && !reelOpen(date);
+  row.classList.toggle("url-locked", lock); u.readOnly = lock; u.placeholder = lock ? urlLockText(date) : "Reel link";
 }
 function platformOptions(h, cur){
   const ps = h && S.creators[h] ? Object.keys(platformsOf(S.creators[h])) : [];
@@ -2222,14 +2485,15 @@ function openCampaign(id, handle, unlockTerms, preBrand){
           <div class="rr rr-h"><span>Reel</span><span>Views</span><span>Shares</span><span>Saves</span><span>Measured on</span></div>
           ${combined ? (()=>{ const u=units[0]; return `<div class="rr" data-combined="1"><span><b>${u.n>1?`${u.n} reels combined`:"Reel"}</b><small>imported from the sheet</small></span>
               <input class="in rv" inputmode="decimal" value="${esc(u.views??"")}" aria-label="Views"><input class="in rs" inputmode="decimal" value="${esc(u.shares??"")}" aria-label="Shares"><input class="in rsv" inputmode="decimal" value="${esc(u.saves??"")}" aria-label="Saves"><input class="in rm" type="date" value="${esc(u.measuredOn||"")}" aria-label="Measured on"></div>`; })()
-          : k.deliverables.filter(d=>d.type==="Reel").map((d,i)=>{ const st = unitState(k,{date:d.date, views:d.views, measuredOn:d.measuredOn||""}); const open = d.date<=today;
-              return `<div class="rr" data-uid="${esc(d.uid)}"><span><b>Reel ${i+1}${d.url?` <a class="plink" href="${esc(d.url)}" target="_blank" rel="noopener" title="Open the reel">↗</a>`:""}</b><small>${esc(fmtDs(d.date))} · ${open ? (st.s==="done"?"collected":st.s==="due"?`<em class="late">due ${esc(fmtDs(st.due))}</em>`:`collect ${esc(fmtDs(st.due))}`) : "not posted yet"}</small></span>
-              ${open ? `<input class="in rv" inputmode="decimal" value="${esc(d.views??"")}" aria-label="Reel ${i+1} views"><input class="in rs" inputmode="decimal" value="${esc(d.shares??"")}" aria-label="Reel ${i+1} shares"><input class="in rsv" inputmode="decimal" value="${esc(d.saves??"")}" aria-label="Reel ${i+1} saves"><input class="in rm" type="date" value="${esc(d.measuredOn||"")}" aria-label="Reel ${i+1} measured on">` : `<span class="hint" style="grid-column:2/-1">Opens on ${esc(fmtD(d.date))}</span>`}</div>`; }).join("")}
+          : k.deliverables.filter(d=>d.type==="Reel").map((d,i)=>{ const st = unitState(k,{date:d.date, views:d.views, measuredOn:d.measuredOn||""}); const open = reelOpen(d.date), opensOn = resultsOpenOn(d.date);
+              return `<div class="rr" data-uid="${esc(d.uid)}"><span><b>Reel ${i+1}${d.url?` <a class="plink" href="${esc(d.url)}" target="_blank" rel="noopener" title="Open the reel">↗</a>`:""}</b><small>${esc(fmtDs(d.date))} · ${open ? (st.s==="done"?"collected":st.s==="due"?`<em class="late">${today>st.due?`${daysBetween(st.due,today)} day${daysBetween(st.due,today)>1?"s":""} late`:"due today"}</em>`:`collect ${esc(fmtDs(st.due))}`) : d.date>today ? "not posted yet" : `day ${daysBetween(d.date,today)} of ${REELS_DAYS}`}</small></span>
+              ${open ? `<input class="in rv" inputmode="decimal" value="${esc(d.views??"")}" aria-label="Reel ${i+1} views"><input class="in rs" inputmode="decimal" value="${esc(d.shares??"")}" aria-label="Reel ${i+1} shares"><input class="in rsv" inputmode="decimal" value="${esc(d.saves??"")}" aria-label="Reel ${i+1} saves"><input class="in rm" type="date" min="${esc(opensOn)}" value="${esc(d.measuredOn||"")}" aria-label="Reel ${i+1} measured on">` : `<span class="lockrow" style="grid-column:2/-1">🔒 Results open ${esc(fmtD(opensOn))}, ${REELS_DAYS} days after posting</span>`}</div>`; }).join("")}
         </div>
-        <p class="hint" style="margin:4px 0 0">Collect each reel ${REELS_DAYS} days after it went up. Measured-on fills in with today's date when you change a reel's numbers.</p>
+        <p class="hint" style="margin:4px 0 0">Results and the reel link can only be entered from day ${REELS_DAYS} after the reel went up. Measured-on fills in with today's date when you change a reel's numbers.</p>
         ${k.deliverables.some(d=>d.type==="Story")?`<label class="field" style="max-width:260px"><span>Story views, total (optional, if shared)</span><input id="k_stv" type="text" inputmode="decimal" value="${esc(k.storyViews??"")}" placeholder="Leave empty if not shared"></label>`:""}
         ${(()=>{ const sg=onTimeSuggest(k), cur = k.onTime!=null ? k.onTime : sg; return `<label class="field" style="max-width:260px"><span>Posted on time?</span><select id="k_ot"><option value="" ${cur==null?"selected":""}>Not set</option><option value="1" ${cur===true?"selected":""}>Yes</option><option value="0" ${cur===false?"selected":""}>No, late</option></select>${sg!=null?`<span class="hint">${k.onTime==null?"Pre-filled from the dates":"Dates suggest"}: ${esc(onTimeReason(k))}. Change it if the delay was on our side.</span>`:""}</label>`; })()}
-        ${k.hasCode?`<div class="grid3" style="margin-top:10px">
+        ${k.hasCode && lastReel(k) && iso(TODAY) < iso(addDays(lastReel(k), CODE_DAYS)) ? `<p class="lockrow" style="margin-top:10px">🔒 Code uses open ${esc(fmtD(iso(addDays(lastReel(k), CODE_DAYS))))}, ${CODE_DAYS} days after the last reel.</p>` : ""}
+        ${k.hasCode && !(lastReel(k) && iso(TODAY) < iso(addDays(lastReel(k), CODE_DAYS)))?`<div class="grid3" style="margin-top:10px">
           <label class="field"><span>Code uses (orders)</span><input id="k_o" type="number" min="0" value="${esc(k.orders??"")}"></label>
           <label class="field"><span>Revenue (USD)</span><input id="k_rev" type="number" min="0" step="0.01" value="${esc(k.revenue??"")}"></label>
           <label class="field"><span>Counted on</span><input id="k_cm" type="date" min="2024-01-01" max="2030-12-31" value="${esc(k.codeMeasuredOn||"")}"></label>
@@ -2244,7 +2508,7 @@ function openCampaign(id, handle, unlockTerms, preBrand){
     <div class="dfoot">
       ${!isNew ? (isCancelled(k) ? `<button class="btn" type="button" id="restoreBtn">Restore deal</button>` : `<button class="btn danger" type="button" id="cancelBtn">Cancel deal</button>`) : ""}
       <span class="sp"></span><button class="btn ghost" type="button" data-close>Close</button><button class="btn primary" type="button" id="saveBtn">${isNew?"Book deal":"Save"}</button>
-    </div>`);
+    </div>`, "deal", isNew);
 
   const list = $("#dlList");
   const addRow = type => { list.insertAdjacentHTML("beforeend", deliverableRow({type,date:""}, list.children.length)); list.lastElementChild.querySelector("input").focus(); };
@@ -2258,7 +2522,8 @@ function openCampaign(id, handle, unlockTerms, preBrand){
     el.innerHTML = `${esc(bn)} · ${esc(monthName(ym))}: ${fmt$(spent,0)} already spent of ${fmt$(B,0)}. ${left>=0?`${fmt$(left,0)} left after this deal.`:`<b style="color:var(--bad)">${fmt$(-left,0)} over budget with this deal.</b>`}`; };
   $("#k_b")?.addEventListener("change", updBudget); $("#k_price")?.addEventListener("input", updBudget); list.addEventListener("change", updBudget); updBudget();
   const curH = () => ($("#k_h").value||"").trim().replace(/^@/,"").toLowerCase();
-  list.addEventListener("change", e=>{ if(e.target.matches(".dl-type")) e.target.closest(".dl").classList.toggle("is-story", e.target.value==="Story"); });
+  list.addEventListener("change", e=>{ if(e.target.matches(".dl-type")) e.target.closest(".dl").classList.toggle("is-story", e.target.value==="Story"); if(e.target.matches(".dl-type,.dl-date")) updUrlLock(e.target.closest(".dl")); });
+  list.addEventListener("focusin", e=>{ if(e.target.matches(".dl-url") && e.target.readOnly) toast(`Reel links can only be added ${REELS_DAYS} days after the reel is posted.`); });
   const rcCheck = ()=>{ const box=$("#rcBox"); if(!box) return; const h=curH(), c=S.creators[h]; const price=$("#k_price").value;
     const types=[...list.querySelectorAll(".dl-type")].map(x=>x.value); const p={reels:types.filter(t=>t==="Reel").length, stories:types.filter(t=>t==="Story").length};
     if(!c || price==="" || !(p.reels+p.stories)){ box.hidden=true; return; }
@@ -2281,7 +2546,7 @@ function openCampaign(id, handle, unlockTerms, preBrand){
 
   const setCancel = async (val) => { const doc={...k, status: val?"Cancelled":""}; doc.status = val ? "Cancelled" : derivedStatus({...doc, status:""}); if(await write(()=>db.collection("campaigns").doc(id).set(doc), val?"Deal cancelled":"Deal restored", {act: val?"cancel":"restore", summary:`${val?"Cancelled":"Restored"} @${k.handle}'s ${k.brand} deal (${priceTxt(k.price)})`, ref:{deal:id}})) closeDrawer(); };
   $("#cancelBtn")?.addEventListener("click",()=>{
-    $("#delZone").innerHTML = `<div class="confirm">Cancel this deal? It stays on record but isn't scored or counted.<span style="margin-left:auto"></span><button class="btn" type="button" id="cNo">Keep</button><button class="btn danger" type="button" id="cYes">Cancel deal</button>${isAdmin()?`<button class="btn ghost" type="button" id="dDel" style="font-size:12px">Delete record</button>`:""}</div>`;
+    $("#delZone").innerHTML = `<div class="confirm">Cancel this deal? It stays on record but isn't scored or counted.<span style="margin-left:auto"></span><button class="btn" type="button" id="cNo">Keep</button><button class="btn danger" type="button" id="cYes">Cancel deal</button>${can("delDeal")?`<button class="btn ghost" type="button" id="dDel" style="font-size:12px">Delete record</button>`:""}</div>`;
     $("#cNo").onclick=()=>$("#delZone").innerHTML=""; $("#cYes").onclick=()=>setCancel(true);
     if($("#dDel")) $("#dDel").onclick=async()=>{ if(await write(()=>db.collection("campaigns").doc(id).delete(),"Deal deleted", {act:"delete_deal", summary:`Deleted @${k.handle}'s ${k.brand} deal (${priceTxt(k.price)})`})) closeDrawer(); };
     $("#delZone").scrollIntoView({block:"nearest"});
@@ -2298,6 +2563,8 @@ function openCampaign(id, handle, unlockTerms, preBrand){
       const planned = p.uid ? (p.planned || undefined) : date;
       let url=type==="Reel"?(r.querySelector(".dl-url").value||"").trim():""; if(url && !/^https?:\/\//i.test(url)) url="https://"+url;
       return {uid:r.dataset.uid, type, date, ...(planned?{planned}:{}), ...(url?{url}:{}), ...keep}; });
+    const earlyLink = dl.find(d=>d.type==="Reel" && d.url && d.url!==(prevByUid[d.uid]?.url||"") && !reelOpen(d.date));
+    if(earlyLink){ toast(`The reel on ${fmtDs(earlyLink.date)} can get its link from ${fmtD(resultsOpenOn(earlyLink.date))}, ${REELS_DAYS} days after posting.`); return; }
     if(dl.some(d=>d.url && !/^https?:\/\/[^\s.]+\.[^\s]+$/i.test(d.url))){ toast("A post link doesn't look right. Paste the full link from Instagram, e.g. instagram.com/reel/…"); return; }
     if(!dl.length){ toast("Add at least one post, a reel or a story."); return; }
     if(dl.some(d=>!d.date)){ toast("Every post needs a date. A planned date is fine."); return; }
@@ -2330,6 +2597,10 @@ function openCampaign(id, handle, unlockTerms, preBrand){
         if(!rm && (v!==(prev.views??null) || sh!==(prev.shares??null) || sv!==(prev.saves??null)) && (v!=null||sh!=null||sv!=null)) rm = today;
         if(rm && rm>today) throw `${label}: results can't be measured on a future date.`;
         if(rm && prev.date && rm<prev.date) throw `${label}: measured before it was posted. Check the date.`;
+        if(!r.dataset.combined && prev.date && (v!=null||sh!=null||sv!=null) && (v!==(prev.views??null) || sh!==(prev.shares??null) || sv!==(prev.saves??null))){
+          if(!reelOpen(prev.date)) throw `${label}: results open on ${fmtD(resultsOpenOn(prev.date))}, ${REELS_DAYS} days after posting.`;
+          if(rm && rm<resultsOpenOn(prev.date)) throw `${label}: results must be measured on day ${REELS_DAYS} or later (from ${fmtD(resultsOpenOn(prev.date))}).`;
+        }
         return {views:v, shares:sh, saves:sv, measuredOn:rm||""};
       };
       try{
@@ -2340,7 +2611,7 @@ function openCampaign(id, handle, unlockTerms, preBrand){
           for(const r of document.querySelectorAll(".rr[data-uid]")){
             if(!r.querySelector(".rv")) continue;
             const d = doc.deliverables.find(x=>x.uid===r.dataset.uid);
-            if(!d || d.type!=="Reel" || d.date>today) continue; // post removed, retyped or moved to the future
+            if(!d || d.type!=="Reel" || !reelOpen(d.date)) continue; // post removed, retyped, or not at day 7 yet
             Object.assign(d, readRow(r, d, `Reel on ${fmtDs(d.date)}`));
           }
           const reels = doc.deliverables.filter(x=>x.type==="Reel");
@@ -2399,11 +2670,64 @@ const USERS = {
   marlo: {name:"Marla", role:"editor"},
   layan: {name:"Layan", role:"editor"},
 };
-const ROLE_LABEL = {admin:"Admin", editor:"Marketing editor"};
+const BUILTIN_USERS = Object.keys(USERS);
+// Roles: Admin is fixed (everything). Others are editable by the admin and stored in settings/main.roles.
+const PERMS = [
+  {g:"Tabs they can open", items:[["tab_today","Today"],["tab_find","Find creators"],["tab_board","Leaderboard"],["tab_deals","Deals"]]},
+  {g:"Creators", items:[["onboard","Onboard new creators"],["editCreator","Edit creator details & prices"],["outreach","Outreach status & follow-ups"],["followers","Update follower counts"],["dnb","Flag Do not book"],["delCreator","Delete creators"]]},
+  {g:"Deals", items:[["book","Book deals"],["results","Log post dates, links & results"],["terms","Change agreed deal terms"],["cancel","Cancel or restore deals"],["delDeal","Delete deals"]]},
+];
+const PERM_KEYS = PERMS.flatMap(g=>g.items.map(i=>i[0]));
+const allPerms = v => Object.fromEntries(PERM_KEYS.map(k=>[k, v]));
+const ROLE_DEFAULTS = {
+  admin:  {name:"Admin", perms:allPerms(true), locked:true},
+  editor: {name:"Marketing editor", perms:{...allPerms(true), delCreator:false, delDeal:false}},
+  viewer: {name:"Read only", perms:{...allPerms(false), tab_today:true, tab_find:true, tab_board:true, tab_deals:true}},
+};
+function rolesAll(){
+  const out = {}; const saved = S.settings?.roles || {};
+  for(const id of new Set([...Object.keys(ROLE_DEFAULTS), ...Object.keys(saved)])){
+    const d = ROLE_DEFAULTS[id], x = saved[id];
+    if(x && x.deleted) continue;
+    out[id] = {id, name: (id==="admin" ? d.name : (x?.name || d?.name || id)), locked: !!d?.locked, builtin: !!d,
+      perms: id==="admin" ? allPerms(true) : {...allPerms(false), ...(d?.perms||{}), ...(x?.perms||{})}};
+  }
+  return out;
+}
+const roleName = id => rolesAll()[id]?.name || (id ? id : "No role");
+const ROLE_LABEL = new Proxy({}, {get:(_,id)=>roleName(id)});
+const can = p => !!S.me && (S.me.role==="admin" || rolesAll()[S.me.role]?.perms?.[p]===true);
+const TAB_PERM = {today:"tab_today", find:"tab_find", board:"tab_board", campaigns:"tab_deals"};
+const ID_PERM = {btnAddCreator:"onboard", btnAddCampaign:"book", editDetails:"editCreator", logBtn:"book", dnbBtn:"dnb", unDnb:"dnb", delBtn:"delCreator",
+  editTerms:"terms", cancelBtn:"cancel", restoreBtn:"cancel", dDel:"delDeal", fuStart:"outreach", onboardNew:"onboard", obBook:"book", bookFirst:"book"};
+const SEL_PERM = [["[data-bstat],#addBrand",'outreach',"disable"],[".sw-b,[data-fuone],.ob-b",'outreach',"hide"],["[data-fsave]",'followers',"hide"],["[data-fh]",'followers',"disable"]];
+function gatePerms(){
+  if(!S.me || S.me.role==="admin") return;
+  for(const [id,p] of Object.entries(ID_PERM)){ const el=document.getElementById(id); if(el && !can(p)) el.hidden=true; }
+  for(const [sel,p,how] of SEL_PERM) if(!can(p)) document.querySelectorAll(sel).forEach(el=>{ if(how==="hide") el.hidden=true; else el.disabled=true; });
+  const dr = document.querySelector(".drawer");
+  if(dr && dr.dataset.kind==="deal" && !dr.dataset.isnew){
+    if(!can("results")) dr.querySelectorAll(".dl input, .dl select, .dl-x, #addReel, #addStory, .rres input, #k_ot, #k_stv, #k_o, #k_rev, #k_cm").forEach(el=>{ el.disabled=true; });
+    if(!can("results") && !can("terms")){ const sb=dr.querySelector("#saveBtn"); if(sb) sb.hidden=true; if(!dr.querySelector(".ro-note")) dr.querySelector(".dbody")?.insertAdjacentHTML("afterbegin", `<div class="ro-note">View only. Your role can't change deals.</div>`); }
+  }
+}
+new MutationObserver(()=>{ if(S.me && S.me.role!=="admin") gatePerms(); }).observe(document.body, {childList:true, subtree:true});
 const USER_COLORS = {admin:"var(--fg)", marlo:"var(--rocky)", layan:"var(--bunzo)"};
+const USER_PALETTE = ["#2F6FDE","#6B4FD8","#1E8A6E","#B8860B","#C2185B","#00838F"];
+const userColor = u => USER_COLORS[u] || USER_PALETTE[[...String(u)].reduce((a,c)=>a+c.charCodeAt(0),0) % USER_PALETTE.length];
+S.team = {};   // team/{username}: {name, role, active, addedOn, addedBy}
+function mergeTeam(){
+  for(const [u,t] of Object.entries(S.team)){ if(t.active===false){ if(USERS[u]) USERS[u].inactive=true; continue; }
+    USERS[u] = {...(USERS[u]||{}), name:t.name||USERS[u]?.name||u, role:t.role||USERS[u]?.role||"editor", inactive:false}; }
+}
 S.me = null;
 const isAdmin = () => S.me?.role==="admin";
 
+let teamUnsub = null;
+function watchTeam(){
+  if(teamUnsub || !db) return;
+  teamUnsub = db.collection("team").onSnapshot(q=>{ S.team={}; q.docs.forEach(d=>{ S.team[d.id]=d.data(); }); mergeTeam(); if(S.tab==="admin") render(); }, ()=>{});
+}
 async function logAct(act, summary, ref, extra){
   try{
     if(!db || !S.me) return;
@@ -2414,7 +2738,8 @@ function applyRole(){
   const adminTab = $('#tabs [data-tab="admin"]');
   if(adminTab) adminTab.hidden = !isAdmin();
   if(!isAdmin() && S.tab==="admin") S.tab="today";
-  const who=$("#whoami"); if(who) who.innerHTML = S.me ? `<i style="background:${USER_COLORS[S.me.username]||"var(--fg)"}">${esc(S.me.name[0])}</i><span class="wn">${esc(S.me.name)}</span>` : "";
+  ["btnAddCreator","btnAddCampaign"].forEach(id=>{ const el=document.getElementById(id); if(el) el.hidden = !!S.me && !can(ID_PERM[id]); });
+  const who=$("#whoami"); if(who) who.innerHTML = S.me ? `<i style="background:${userColor(S.me.username)}">${esc(S.me.name[0])}</i><span class="wn">${esc(S.me.name)}</span>` : "";
   const mw=$("#menuWho"); if(mw) mw.innerHTML = S.me ? `<b>${esc(S.me.name)}</b><small>@${esc(S.me.username)} · ${esc(ROLE_LABEL[S.me.role])}</small>` : "";
 }
 function gateSetup(){
@@ -2424,11 +2749,15 @@ function gateSetup(){
   const bad = t => { g.classList.remove("shake"); void g.offsetWidth; g.classList.add("shake"); msg.classList.add("bad"); msg.textContent=t; };
   if(!initFirebase()){ msg.textContent="Firebase isn't set up yet."; return; }
   let justSigned = false;
-  FB.auth.onAuthStateChanged(user=>{
+  FB.auth.onAuthStateChanged(async user=>{
     const u = user && user.email && user.email.endsWith("@"+EMAIL_DOMAIN) ? user.email.split("@")[0].toLowerCase() : null;
-    if(user && !USERS[u]){ FB.auth.signOut(); bad("This account isn't on the Creator Hub team."); return; }
-    if(!user){ S.me=null; unsubs.forEach(x=>x()); unsubs=[]; db=null; applyRole(); g.hidden=false; document.documentElement.style.overflow="hidden"; setTimeout(()=>un.focus(),50); return; }
-    S.me = {username:u, ...USERS[u]}; applyRole(); boot(); render();
+    if(!user){ S.me=null; unsubs.forEach(x=>x()); unsubs=[]; teamUnsub&&teamUnsub(); teamUnsub=null; db=null; applyRole(); g.hidden=false; document.documentElement.style.overflow="hidden"; setTimeout(()=>un.focus(),50); return; }
+    if(!u){ FB.auth.signOut(); bad("This account isn't on the Creators Hub team."); return; }
+    let t = null; try{ const d = await FB.fs.collection("team").doc(u).get(); t = d.exists ? d.data() : null; }catch(e){}
+    if(t && t.active===false){ justSigned=false; FB.auth.signOut(); bad("This account has been switched off. Ask the admin."); return; }
+    if(t) USERS[u] = {...(USERS[u]||{}), name:t.name||USERS[u]?.name||u, role:t.role||USERS[u]?.role||"editor"};
+    if(!USERS[u]){ justSigned=false; FB.auth.signOut(); bad("This account isn't on the Creators Hub team."); return; }
+    S.me = {username:u, ...USERS[u]}; maybeLatePopup.done=false; applyRole(); boot(); watchTeam(); render();
     if(justSigned){ justSigned=false; logAct("login", `${S.me.name} signed in`); return; }               // the animation below hides the gate
     g.hidden=true; document.documentElement.style.overflow="";
   });
@@ -2438,7 +2767,7 @@ function gateSetup(){
     const u = un.value.trim().toLowerCase().replace(/^@/,"");
     if(!u){ bad("Type your username first."); un.focus(); return; }
     if(!pw.value){ bad("Type your password."); pw.focus(); return; }
-    if(!USERS[u]){ bad("Username or password doesn't match. Passwords are case-sensitive."); pw.select(); return; }
+    if(!/^[a-z0-9._-]{2,30}$/.test(u)){ bad("Username or password doesn't match. Passwords are case-sensitive."); pw.select(); return; }
     justSigned = true;
     try{ await FB.auth.signInWithEmailAndPassword(`${u}@${EMAIL_DOMAIN}`, pw.value); }
     catch(err){ justSigned=false;
@@ -2446,7 +2775,9 @@ function gateSetup(){
       else if(err && err.code==="auth/network-request-failed") bad("No connection. Check your internet and try again.");
       else bad("Username or password doesn't match. Passwords are case-sensitive.");
       pw.select(); return; }
-    msg.textContent=`Welcome, ${S.me?.name||USERS[u].name}.`;
+    const okIn = await new Promise(res=>{ let n=0; const t=setInterval(()=>{ if(S.me){ clearInterval(t); res(true); } else if(++n>60 || (n>4 && !FB.auth.currentUser)){ clearInterval(t); res(false); } }, 75); });
+    if(!okIn) return;   // the account check above already showed why
+    msg.textContent=`Welcome, ${S.me?.name||USERS[u]?.name||u}.`;
     fill.style.strokeDashoffset="0";
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     if(reduce){ pct.textContent="100%"; } else { const t0=performance.now(); const tick=t=>{ const p=Math.min(1,(t-t0)/900); pct.textContent=Math.round(p*100)+"%"; if(p<1) requestAnimationFrame(tick); }; requestAnimationFrame(tick); }
@@ -2458,7 +2789,7 @@ $("#userBtn").addEventListener("click", e=>{ e.stopPropagation(); const m=$("#us
 document.addEventListener("click", e=>{ const m=$("#userMenu"); if(m && !m.hidden && !e.target.closest(".usermenu")){ m.hidden=true; $("#userBtn").setAttribute("aria-expanded","false"); } });
 $("#btnLock").addEventListener("click", async ()=>{ $("#userMenu").hidden=true;
   if(S.me) await logAct("logout", `${S.me.name} signed out`);
-  closeDrawer(); await FB?.auth.signOut();
+  closeDrawer(); document.querySelector(".late-modal")?.remove(); maybeLatePopup.done=false; await FB?.auth.signOut();
   const g=$("#gate"); g.hidden=false; document.documentElement.style.overflow="hidden";
   $("#gMsg").textContent="Signed out. Percent Labs team access"; setTimeout(()=>$("#gUser").focus(),50);
 });
@@ -2469,82 +2800,295 @@ const ACTS = {
   terms:{l:"Changed deal terms", i:"✎", tone:"warn"}, cancel:{l:"Cancelled deal", i:"⨯", tone:"bad"}, restore:{l:"Restored deal", i:"↺", tone:""},
   delete_deal:{l:"Deleted deal", i:"🗑", tone:"bad"}, onboard:{l:"Onboarded creator", i:"＋", tone:"good"}, edit_creator:{l:"Edited creator", i:"✎", tone:""},
   delete_creator:{l:"Deleted creator", i:"🗑", tone:"bad"}, status:{l:"Outreach update", i:"✉", tone:""}, followers:{l:"Follower update", i:"↑", tone:""},
-  settings:{l:"Changed rules or budget", i:"⚙", tone:"warn"}, dnb:{l:"Flagged do not book", i:"⛔", tone:"bad"}, undnb:{l:"Removed do-not-book flag", i:"↺", tone:""}, login:{l:"Signed in", i:"→", tone:"muted"}, logout:{l:"Signed out", i:"←", tone:"muted"},
+  settings:{l:"Changed rules, budget or brands", i:"⚙", tone:"warn"}, user:{l:"Changed users or access", i:"👤", tone:"warn"}, dnb:{l:"Flagged do not book", i:"⛔", tone:"bad"}, undnb:{l:"Removed do-not-book flag", i:"↺", tone:""}, login:{l:"Signed in", i:"→", tone:"muted"}, logout:{l:"Signed out", i:"←", tone:"muted"},
 };
-S.ad = S.ad || {period:7, user:"", act:"", important:false};
-async function loadLogs(){
+S.ad = S.ad || {period:7, from:"", to:"", user:"", act:"", important:false};
+S.adTab = S.adTab || "attention";
+S.rp = S.rp || {from: null, to: null, brand: "", sel: null};
+let LOGS = {at:0, ok:false, events:[]};
+async function loadLogs(force){
   if(!db || !isAdmin()) return {ok:false, events:[]};
-  try{ const q = await db.collection("logs").orderBy("at","desc").limit(2000).get(); return {ok:true, events:q.docs.map(d=>({id:d.id, ...d.data()}))}; }
-  catch(e){ return {ok:false, events:[]}; }
+  if(!force && LOGS.ok && Date.now()-LOGS.at < 60e3) return LOGS;
+  try{ const q = await db.collection("logs").orderBy("at","desc").limit(3000).get(); LOGS = {at:Date.now(), ok:true, events:q.docs.map(d=>({id:d.id, ...d.data()}))}; }
+  catch(e){ LOGS = {at:Date.now(), ok:false, events:[]}; }
+  return LOGS;
 }
 const relTime = ts => { const m=Math.round((Date.now()-new Date(ts))/6e4); return m<1?"just now": m<60?`${m} min ago`: m<1440?`${Math.round(m/60)} h ago`: `${Math.round(m/1440)} d ago`; };
-const isImportant = e => ["terms","cancel","delete_deal","delete_creator","settings","dnb"].includes(e.act);
+const isImportant = e => ["terms","cancel","delete_deal","delete_creator","settings","dnb","user"].includes(e.act);
+function attentionData(){
+  const ym = thisMonth(), late = lateItems();
+  const budgets = BRANDS.map(b=>({b, budget:budgetFor(b.key, ym), spent:brandSpend(b.key, ym)})).filter(x=>x.budget!=null && x.budget>0 && x.spent >= x.budget*0.9);
+  const longFu = followUps().filter(x=>x.d>=14);
+  const since = Date.now()-14*864e5;
+  const review = (LOGS.events||[]).filter(e=>isImportant(e) && new Date(e.at)>=since && e.username!==S.me?.username).slice(0,12);
+  const quiet = Object.entries(USERS).filter(([u,x])=>!x.inactive && u!==S.me?.username).map(([u,x])=>({u, x, last:(LOGS.events||[]).find(e=>e.username===u)?.at})).filter(t=>!t.last || Date.now()-new Date(t.last) > 14*864e5);
+  return {late, budgets, longFu, review, quiet, ym};
+}
+const adminAttentionCount = () => { const A=attentionData(); return A.late.length + A.budgets.filter(x=>x.spent>x.budget).length; };
+const AD_TABS = [["attention","Needs attention"],["rules","Rules & budgets"],["activity","Activity"],["users","Users & access"],["report","Budget report"]];
 async function renderAdmin(){
   if(!isAdmin()){ S.tab="find"; return render(); }
-  $("#main").innerHTML = `<div class="notice">Loading activity…</div>`;
-  const {ok, events} = await loadLogs();
-  if(S.tab!=="admin") return;
-  const A = S.ad, since = A.period ? Date.now()-A.period*864e5 : 0;
-  const inPeriod = events.filter(e=>new Date(e.at)>=since);
+  if(!LOGS.ok && !renderAdmin.loading){ renderAdmin.loading=true; $("#main").innerHTML = `<div class="notice">Loading…</div>`; await loadLogs(); renderAdmin.loading=false; if(S.tab!=="admin") return; }
+  const T = S.adTab, nAtt = attentionData();
+  const nA = nAtt.late.length + nAtt.budgets.length + nAtt.review.length;
+  $("#main").innerHTML = `
+  <div class="adm">
+    <div class="adm-head"><div><h2>Admin</h2><p class="lede">Only you see this tab.</p></div></div>
+    <nav class="adm-tabs" role="tablist" aria-label="Admin sections">${AD_TABS.map(([k,l])=>`<button type="button" role="tab" data-adtab="${k}" aria-selected="${T===k}">${esc(l)}${k==="attention"&&nA?`<span class="count hot">${nA}</span>`:""}</button>`).join("")}</nav>
+    ${LOGS.ok ? "" : `<div class="warnbox">Couldn't load the activity log. Check your connection, or that the security rules are published.</div>`}
+    <div id="adBody">${({attention:attentionHTML, rules:rulesHTML, activity:activityHTML, users:usersHTML, report:reportHTML}[T]||attentionHTML)()}</div>
+  </div>`;
+  document.querySelectorAll("[data-adtab]").forEach(b=>b.onclick=()=>{ S.adTab=b.dataset.adtab; renderAdmin(); window.scrollTo({top:0}); });
+  document.querySelectorAll("[data-adtab-go]").forEach(b=>b.onclick=()=>{ S.adTab=b.dataset.adtabGo; renderAdmin(); window.scrollTo({top:0}); });
+  ({attention:wireAttention, rules:()=>wireRules(renderAdmin), activity:wireActivity, users:wireUsers, report:wireReport}[T]||(()=>{}))();
+  document.querySelectorAll("[data-ev-deal]").forEach(b=>b.onclick=()=>{ if(S.campaigns[b.dataset.evDeal]) openCampaign(b.dataset.evDeal); else toast("That deal no longer exists."); });
+  document.querySelectorAll("[data-ev-creator]").forEach(b=>b.onclick=()=>{ if(S.creators[b.dataset.evCreator]) openCreator(b.dataset.evCreator); else toast("That creator is no longer in the roster."); });
+}
+
+/* Admin · Needs attention */
+function attentionHTML(){
+  const A = attentionData();
+  const card = (tone, title, n, body) => `<section class="att ${tone}"><div class="att-h"><b>${title}</b><span class="att-n">${n}</span></div>${body}</section>`;
+  const all = A.late.length + A.budgets.length + A.review.length + A.longFu.length + A.quiet.length;
+  if(!all) return `<div class="t2-clear big"><span>✓</span><div><b>Nothing needs you right now.</b><small>Late results, budget alerts and important changes by the team show up here.</small></div></div>`;
+  const byDeal = {}; A.late.forEach(x=>{ (byDeal[x.id] ||= []).push(x); });
+  return `<div class="att-grid">
+    ${A.late.length ? card("bad", "Late submissions", A.late.length, `<p class="att-sub">Results, links or code uses past their collection day.</p><div class="att-list">${Object.entries(byDeal).map(([id,xs])=>`<div class="att-row"><div><b>@${esc(xs[0].k.handle)}</b> <small>${esc(xs[0].k.brand)}</small><div class="att-what">${xs.map(x=>`${esc(LATE_LABEL[x.kind])}${x.date?` (reel ${esc(fmtDs(x.date))})`:""} · <em>${x.late}d late</em>`).join("<br>")}</div></div><button type="button" class="btn sm" data-ev-deal="${esc(id)}">Open</button></div>`).join("")}</div>`) : ""}
+    ${A.budgets.length ? card("warn", `Budgets · ${esc(monthName(A.ym))}`, A.budgets.length, `<div class="att-list">${A.budgets.map(x=>`<div class="att-row"><div><i class="dot" style="background:${x.b.c}"></i> <b>${esc(x.b.name)}</b><div class="att-what">${fmt$(x.spent,0)} of ${fmt$(x.budget,0)} · ${x.spent>x.budget?`<em>${fmt$(x.spent-x.budget,0)} over</em>`:`${Math.round(x.spent/x.budget*100)}% used`}</div></div></div>`).join("")}</div><button type="button" class="linkbtn" data-adtab-go="report">See the budget report</button>`) : ""}
+    ${A.review.length ? card("warn", "Changes to review", A.review.length, `<p class="att-sub">Changed terms, cancellations, deletions and flags by the team in the last 14 days.</p><div class="feed">${A.review.map(evHTML).join("")}</div>`) : ""}
+    ${A.longFu.length ? card("", "Waiting 14+ days for a reply", A.longFu.length, `<p class="att-sub">Creators the team contacted two weeks ago or more with no answer. Worth a final nudge or marking as declined.</p><button type="button" class="btn sm" id="attFu">Go through them</button>`) : ""}
+    ${A.quiet.length ? card("", "Quiet teammates", A.quiet.length, `<p class="att-sub">No activity in the last 14 days.</p><div class="att-list">${A.quiet.map(t=>`<div class="att-row"><div><b>${esc(t.x.name)}</b> <small>@${esc(t.u)}</small><div class="att-what">${t.last?`last active ${esc(relTime(t.last))}`:"never signed in"}</div></div></div>`).join("")}</div>`) : ""}
+  </div>`;
+}
+function wireAttention(){ $("#attFu")?.addEventListener("click",()=>{ S.tab="today"; render(); followUpMode(0); }); }
+
+/* Admin · Activity */
+function activityHTML(){
+  const A = S.ad, events = LOGS.events||[];
+  let since = 0, until = Infinity;
+  if(A.period==="custom"){ if(A.from) since=new Date(A.from+"T00:00:00").getTime(); if(A.to) until=new Date(A.to+"T23:59:59").getTime(); }
+  else if(A.period) since = Date.now()-A.period*864e5;
+  const inPeriod = events.filter(e=>{ const t=new Date(e.at).getTime(); return t>=since && t<=until; });
   const work = inPeriod.filter(e=>e.act!=="login" && e.act!=="logout");
   const count = a => work.filter(e=>e.act===a).length;
   const shown = inPeriod.filter(e=>(!A.user||e.username===A.user) && (!A.act||e.act===A.act) && (!A.important||isImportant(e)));
-  const lastSeen = u => events.find(e=>e.username===u)?.at;
-  const team = Object.entries(USERS).map(([u,x])=>({u, ...x, n: work.filter(e=>e.username===u).length, last:lastSeen(u),
+  const people = Object.entries(USERS).map(([u,x])=>({u, ...x, n: work.filter(e=>e.username===u).length, last: events.find(e=>e.username===u)?.at,
     top: Object.entries(work.filter(e=>e.username===u).reduce((m,e)=>(m[e.act]=(m[e.act]||0)+1,m),{})).sort((a,b)=>b[1]-a[1]).slice(0,3)}));
-  const maxN = Math.max(1,...team.map(t=>t.n));
+  const maxN = Math.max(1,...people.map(t=>t.n));
   const byDay = {}; shown.forEach(e=>{ const d=iso(new Date(e.at)); (byDay[d] ||= []).push(e); });
   const dayLabel = d => d===iso(TODAY) ? "Today" : d===iso(addDays(iso(TODAY),-1)) ? "Yesterday" : fmtD(d);
-  const flagged = work.filter(isImportant).slice(0,5);
-  $("#main").innerHTML = `
-  <div class="adm">
-    <div class="adm-head"><div><h2>Activity &amp; team</h2><p class="lede">Only you see this tab. Every save in the Hub is recorded here with who did it and when.</p></div>
-      <div class="league" role="group" aria-label="Period">${[[7,"7 days"],[30,"30 days"],[0,"All time"]].map(([v,l])=>`<button type="button" data-per="${v}" aria-pressed="${A.period===v}">${l}</button>`).join("")}</div></div>
-    ${ok ? "" : `<div class="warnbox">Couldn't load the activity log. Check your connection, or that the security rules are published.</div>`}
+  return `
+    <div class="toolbar adm-filters">
+      <div class="league" role="group" aria-label="Period">${[[7,"7 days"],[30,"30 days"],[0,"All time"],["custom","Dates…"]].map(([v,l])=>`<button type="button" data-per="${v}" aria-pressed="${A.period===v}">${l}</button>`).join("")}</div>
+      ${A.period==="custom"?`<label class="tb"><span>From</span><input id="adFrom" type="date" class="in" value="${esc(A.from)}"></label><label class="tb"><span>To</span><input id="adTo" type="date" class="in" value="${esc(A.to)}"></label>`:""}
+      <label class="tb"><span>Person</span><select id="adU" class="in"><option value="">Everyone</option>${Object.entries(USERS).map(([u,x])=>`<option value="${esc(u)}" ${A.user===u?"selected":""}>${esc(x.name)}</option>`).join("")}</select></label>
+      <label class="tb"><span>Action</span><select id="adA" class="in"><option value="">All actions</option>${Object.entries(ACTS).map(([k,x])=>`<option value="${k}" ${A.act===k?"selected":""}>${esc(x.l)}</option>`).join("")}</select></label>
+      <label class="check" style="align-self:flex-end;padding-bottom:8px"><input type="checkbox" id="adI" ${A.important?"checked":""}> Only what needs a look</label>
+      <button type="button" class="btn ghost sm" id="adRefresh" style="align-self:flex-end">↻ Refresh</button>
+    </div>
     <div class="kpis">
       <div class="kpi"><div class="v">${work.length}</div><div class="k">Changes saved</div></div>
       <div class="kpi"><div class="v">${count("book")}</div><div class="k">Deals booked</div></div>
       <div class="kpi"><div class="v">${count("results")}</div><div class="k">Results logged</div></div>
       <div class="kpi"><div class="v">${count("onboard")}</div><div class="k">Creators onboarded</div></div>
-      <div class="kpi"><div class="v" style="color:${work.filter(isImportant).length?"var(--bad)":"inherit"}">${work.filter(isImportant).length}</div><div class="k">Need a look (terms, cancels, deletes)</div></div>
+      <div class="kpi"><div class="v" style="color:${work.filter(isImportant).length?"var(--bad)":"inherit"}">${work.filter(isImportant).length}</div><div class="k">Need a look</div></div>
     </div>
-    <div class="adm-grid">
-      <section>
-        <h3 class="pb-h">Team &amp; access</h3>
-        <div class="team">${team.map(t=>`<div class="tm">
-          <div class="tm-h"><i class="av" style="background:${USER_COLORS[t.u]}">${esc(t.name[0])}</i><div><b>${esc(t.name)}</b><small>@${esc(t.u)} · ${esc(ROLE_LABEL[t.role])}</small></div><span class="tm-last">${t.last?esc(relTime(t.last)):"never signed in"}</span></div>
-          <div class="tm-bar"><span style="width:${t.n/maxN*100}%;background:${USER_COLORS[t.u]}"></span></div>
-          <div class="tm-meta"><b class="num">${t.n}</b> change${t.n!==1?"s":""}${t.top.length?" · "+t.top.map(([a,n])=>`${n} ${esc(ACTS[a]?.l.toLowerCase()||a)}`).join(", "):""}</div>
-          <div class="tm-acc">${t.role==="admin"?`<span class="ok">Everything</span><span class="ok">Activity &amp; team</span>`:`<span class="ok">Creators, deals, results</span><span class="ok">Outreach &amp; follow-ups</span><span class="no">Deleting</span><span class="no">Rules &amp; budgets</span><span class="no">Activity &amp; team</span>`}</div>
-        </div>`).join("")}</div>
-        <p class="hint">To add someone or change a password, use Authentication in the Firebase console. Passwords are case-sensitive.</p>
-        ${rulesHTML()}
-        ${flagged.length?`<h3 class="pb-h" style="margin-top:22px">Need a look</h3><div class="feed">${flagged.map(evHTML).join("")}</div>`:""}
-      </section>
-      <section style="min-width:0">
-        <h3 class="pb-h">Activity</h3>
-        <div class="toolbar">
-          <label class="tb"><span>Person</span><select id="adU" class="in"><option value="">Everyone</option>${Object.entries(USERS).map(([u,x])=>`<option value="${u}" ${A.user===u?"selected":""}>${esc(x.name)}</option>`).join("")}</select></label>
-          <label class="tb"><span>Action</span><select id="adA" class="in"><option value="">All actions</option>${Object.entries(ACTS).map(([k,x])=>`<option value="${k}" ${A.act===k?"selected":""}>${esc(x.l)}</option>`).join("")}</select></label>
-          <label class="check" style="align-self:flex-end;padding-bottom:8px"><input type="checkbox" id="adI" ${A.important?"checked":""}> Only what needs a look</label>
-        </div>
-        <div class="feed">${Object.keys(byDay).length ? Object.entries(byDay).map(([d,evs])=>`<div class="fd-day">${esc(dayLabel(d))}<span>${evs.length}</span></div>${evs.map(evHTML).join("")}`).join("") : `<div class="notice">${ok?"No activity in this period yet.":"Activity shows here on the owner's account."}</div>`}</div>
-      </section>
-    </div>
-  </div>`;
-  document.querySelectorAll("[data-per]").forEach(b=>b.onclick=()=>{ A.period=+b.dataset.per; renderAdmin(); });
-  wireRules();
+    <h3 class="pb-h">By team member</h3>
+    <div class="team">${people.map(t=>`<button type="button" class="tm tm-btn ${A.user===t.u?"on":""}" data-tmu="${esc(t.u)}" title="Show only ${esc(t.name)}'s activity">
+      <div class="tm-h"><i class="av" style="background:${userColor(t.u)}">${esc((t.name||"?")[0])}</i><div><b>${esc(t.name)}</b><small>@${esc(t.u)}${t.inactive?" · switched off":""}</small></div><span class="tm-last">${t.last?esc(relTime(t.last)):"never signed in"}</span></div>
+      <div class="tm-bar"><span style="width:${t.n/maxN*100}%;background:${userColor(t.u)}"></span></div>
+      <div class="tm-meta"><b class="num">${t.n}</b> change${t.n!==1?"s":""}${t.top.length?" · "+t.top.map(([a,n])=>`${n} ${esc(ACTS[a]?.l.toLowerCase()||a)}`).join(", "):""}</div></button>`).join("")}</div>
+    <h3 class="pb-h" style="margin-top:22px">Log <span class="hint" style="font-weight:400">${shown.length} entr${shown.length===1?"y":"ies"}</span></h3>
+    <div class="feed">${Object.keys(byDay).length ? Object.entries(byDay).map(([d,evs])=>`<div class="fd-day">${esc(dayLabel(d))}<span>${evs.length}</span></div>${evs.map(evHTML).join("")}`).join("") : `<div class="notice">No activity matches these filters.</div>`}</div>`;
+}
+function wireActivity(){
+  const A = S.ad;
+  document.querySelectorAll("[data-per]").forEach(b=>b.onclick=()=>{ const v=b.dataset.per; A.period = v==="custom" ? "custom" : +v; if(A.period==="custom" && !A.from){ A.from=iso(addDays(iso(TODAY),-30)); A.to=iso(TODAY); } renderAdmin(); });
+  $("#adFrom")?.addEventListener("change",e=>{ A.from=e.target.value; renderAdmin(); });
+  $("#adTo")?.addEventListener("change",e=>{ A.to=e.target.value; renderAdmin(); });
   $("#adU").onchange=e=>{ A.user=e.target.value; renderAdmin(); };
   $("#adA").onchange=e=>{ A.act=e.target.value; renderAdmin(); };
   $("#adI").onchange=e=>{ A.important=e.target.checked; renderAdmin(); };
-  document.querySelectorAll("[data-ev-deal]").forEach(b=>b.onclick=()=>{ if(S.campaigns[b.dataset.evDeal]) openCampaign(b.dataset.evDeal); else toast("That deal no longer exists."); });
-  document.querySelectorAll("[data-ev-creator]").forEach(b=>b.onclick=()=>{ if(S.creators[b.dataset.evCreator]) openCreator(b.dataset.evCreator); else toast("That creator is no longer in the roster."); });
+  $("#adRefresh").onclick=async()=>{ await loadLogs(true); renderAdmin(); };
+  document.querySelectorAll("[data-tmu]").forEach(b=>b.onclick=()=>{ A.user = A.user===b.dataset.tmu ? "" : b.dataset.tmu; renderAdmin(); });
+}
+
+/* Admin · Users & access */
+function usersHTML(){
+  const events = LOGS.events||[];
+  const list = Object.entries(USERS).map(([u,x])=>({u, ...x, t:S.team[u], last: events.find(e=>e.username===u)?.at, builtin:BUILTIN_USERS.includes(u)}));
+  const RA = rolesAll();
+  const access = r => { if(r==="admin") return `<span class="ok">Everything</span><span class="ok">Admin tab</span>`; const P=RA[r]?.perms||{}; const on=PERM_KEYS.filter(k=>P[k]);
+    if(!RA[r]) return `<span class="no">Role removed: pick another</span>`;
+    const acts = on.filter(k=>!k.startsWith("tab_")); return acts.length ? `<span class="ok">${acts.length} of ${PERM_KEYS.filter(k=>!k.startsWith("tab_")).length} actions</span><span class="ok">${on.filter(k=>k.startsWith("tab_")).length} tabs</span>` : `<span class="ok">Read only</span><span class="ok">${on.filter(k=>k.startsWith("tab_")).length} tabs</span>`; };
+  const roleOpts = cur => Object.values(RA).map(r=>`<option value="${esc(r.id)}" ${cur===r.id?"selected":""}>${esc(r.name)}</option>`).join("");
+  return `<div class="adm-cols">
+    <section class="adm-card">
+      <h3 class="pb-h">Users</h3>
+      <div class="ulist">${list.map(p=>{ const me=p.u===S.me?.username; return `<div class="urow ${p.inactive?"off":""}">
+        <div class="tm-h"><i class="av" style="background:${userColor(p.u)}">${esc((p.name||"?")[0])}</i><div><b>${esc(p.name)}</b><small>@${esc(p.u)} · ${p.last?`active ${esc(relTime(p.last))}`:"never signed in"}${p.t?.addedOn?` · added ${esc(fmtDs(p.t.addedOn))}`:""}</small></div>
+          ${me ? `<span class="pill">You</span>` : `<span class="u-acts"><select class="in u-role" data-urole="${esc(p.u)}" aria-label="Role for ${esc(p.name)}" ${p.inactive?"disabled":""}>${roleOpts(p.role)}</select>
+            <button type="button" class="btn sm ${p.inactive?"":"ghost danger"}" data-uact="${esc(p.u)}" data-on="${p.inactive?"1":"0"}">${p.inactive?"Switch on":"Switch off"}</button></span>`}</div>
+        <div class="tm-acc">${p.inactive?`<span class="no">No access: switched off</span>`:access(p.role)}</div></div>`; }).join("")}</div>
+      <p class="hint">Switching someone off blocks them straight away; their past activity stays. To reset a forgotten password: Firebase console → Authentication → find the user → delete them, then add them again here with the same username.</p>
+    </section>
+    <section class="adm-card">
+      <h3 class="pb-h">Add a user</h3>
+      <div class="rules-card adduser">
+        <label class="field"><span>Full name</span><input id="nuName" class="in" type="text" placeholder="e.g. Sara Haddad" autocomplete="off"></label>
+        <label class="field"><span>Username (what they type to sign in)</span><input id="nuUser" class="in" type="text" placeholder="e.g. sara" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <label class="field"><span>Password (at least 6 characters, case-sensitive)</span><input id="nuPw" class="in" type="text" autocomplete="new-password" spellcheck="false"></label>
+        <label class="field"><span>Role</span><select id="nuRole" class="in">${roleOpts("editor")}</select></label>
+        <button type="button" class="btn primary" id="nuAdd">Add user</button>
+        <p class="hint" style="margin:0">Send them the link, their username and password privately. They sign in at creators.percent-labs.com. Nothing else to do in Firebase.</p>
+      </div>
+    </section></div>
+    ${rolesHTML()}`;
+}
+function rolesHTML(){
+  const RA = Object.values(rolesAll());
+  const used = id => Object.values(USERS).filter(x=>x.role===id && !x.inactive).length;
+  return `<section class="adm-card roles" style="margin-top:26px">
+    <div class="roles-h"><div><h3 class="pb-h" style="margin:0">Roles</h3><p class="hint" style="margin:4px 0 0">Tick what each role can see and do. Changes apply the next time someone opens the Hub. Admin always has everything, including this tab.</p></div>
+      <div class="ab-row roles-new"><label class="field"><span>New role</span><input id="nrName" class="in" type="text" placeholder="e.g. Intern" maxlength="30"></label><button type="button" class="btn" id="nrAdd">+ Add role</button></div></div>
+    <div class="tablewrap"><table class="rmatrix"><thead><tr><th>Can…</th>${RA.map(r=>`<th class="c">${esc(r.name)}<small>${used(r.id)} user${used(r.id)!==1?"s":""}</small>${!r.builtin?`<button type="button" class="linkbtn danger rdel" data-rdel="${esc(r.id)}" ${used(r.id)?"disabled title='Move its users to another role first'":""}>Remove</button>`:""}</th>`).join("")}</tr></thead>
+      <tbody>${PERMS.map(g=>`<tr class="rg"><td colspan="${RA.length+1}">${esc(g.g)}</td></tr>${g.items.map(([k,l])=>`<tr><td>${esc(l)}</td>${RA.map(r=>`<td class="c"><input type="checkbox" data-rp="${esc(r.id)}|${k}" ${r.perms[k]?"checked":""} ${r.locked?"disabled":""} aria-label="${esc(r.name)}: ${esc(l)}"></td>`).join("")}</tr>`).join("")}`).join("")}
+      <tr class="rg"><td colspan="${RA.length+1}">Admin only</td></tr><tr><td>Admin tab: rules, budgets, brands, users, reports</td>${RA.map(r=>`<td class="c">${r.id==="admin"?"✓":"–"}</td>`).join("")}</tr></tbody></table></div>
+  </section>`;
+}
+async function saveRoles(next, ok, summary){
+  const roles = {}; for(const r of Object.values(next)) if(r.id!=="admin") roles[r.id] = {name:r.name, perms:r.perms, ...(r.deleted?{deleted:true}:{})};
+  if(await saveSettings({roles}, ok, summary)){ S.settings.roles = roles; renderAdmin(); }
+}
+function wireRoles(){
+  document.querySelectorAll("[data-rp]").forEach(cb=>cb.onchange=()=>{
+    const [id,k]=cb.dataset.rp.split("|"); const all=rolesAll(); all[id].perms={...all[id].perms, [k]:cb.checked};
+    const label = PERMS.flatMap(g=>g.items).find(i=>i[0]===k)[1];
+    saveRoles(all, `${all[id].name}: ${label} ${cb.checked?"on":"off"}`, `Role ${all[id].name}: ${label} ${cb.checked?"allowed":"removed"}`);
+  });
+  $("#nrAdd")?.addEventListener("click",()=>{
+    const name=($("#nrName").value||"").trim(); if(name.length<2){ toast("Type a name for the role."); $("#nrName").focus(); return; }
+    const id=name.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g,"").slice(0,24) || "role"+Date.now().toString(36);
+    const all=rolesAll(); if(all[id] || Object.values(all).some(r=>r.name.toLowerCase()===name.toLowerCase())){ toast(`There's already a role called ${name}.`); return; }
+    all[id]={id, name, perms:{...ROLE_DEFAULTS.viewer.perms}};
+    saveRoles(all, `${name} added. It starts as read only; tick what it can do.`, `Added the role ${name}`);
+  });
+  document.querySelectorAll("[data-rdel]").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.rdel, all=rolesAll(), name=all[id].name;
+    if(!b.dataset.sure){ b.dataset.sure="1"; b.textContent="Confirm remove"; return; }
+    all[id]={...all[id], deleted:true}; saveRoles(all, `${name} removed`, `Removed the role ${name}`);
+  });
+}
+function wireUsers(){
+  wireRoles();
+  document.querySelectorAll("[data-urole]").forEach(sel=>sel.onchange=async()=>{
+    const u=sel.dataset.urole, role=sel.value, x=USERS[u];
+    if(await write(()=>db.collection("team").doc(u).set({...(S.team[u]||{name:x.name, active:true}), name:x.name, role}), `${x.name} is now ${roleName(role)}`, {act:"user", summary:`${x.name} (@${u}): role → ${ROLE_LABEL[role]}`})){ USERS[u].role=role; }
+    renderAdmin();
+  });
+  document.querySelectorAll("[data-uact]").forEach(b=>b.onclick=async()=>{
+    const u=b.dataset.uact, on=b.dataset.on==="1", x=USERS[u];
+    if(!on && !b.dataset.sure){ b.dataset.sure="1"; b.textContent=`Confirm: switch off ${x.name}`; return; }
+    if(await write(()=>db.collection("team").doc(u).set({...(S.team[u]||{name:x.name, role:x.role}), name:x.name, role:x.role||"editor", active:on}), on?`${x.name} can sign in again`:`${x.name} is switched off`, {act:"user", summary:`${on?"Switched on":"Switched off"} ${x.name} (@${u})`})){ USERS[u].inactive=!on; }
+    renderAdmin();
+  });
+  $("#nuAdd")?.addEventListener("click", async ()=>{
+    const name=($("#nuName").value||"").trim(), u=($("#nuUser").value||"").trim().toLowerCase().replace(/^@/,""), pw=$("#nuPw").value, role=$("#nuRole").value;
+    if(name.length<2){ toast("Type their full name."); $("#nuName").focus(); return; }
+    if(!/^[a-z0-9._-]{2,30}$/.test(u)){ toast("Username: 2–30 letters, numbers, dots, dashes or underscores. No spaces."); $("#nuUser").focus(); return; }
+    if(USERS[u] || S.team[u]){ toast(`@${u} already exists. Pick another username, or switch them back on.`); return; }
+    if(pw.length<6){ toast("The password needs at least 6 characters."); $("#nuPw").focus(); return; }
+    const btn=$("#nuAdd"); btn.disabled=true; btn.textContent="Adding…";
+    try{
+      const app2 = firebase.apps.find(a=>a.name==="adduser") || firebase.initializeApp(window.FIREBASE_CONFIG, "adduser");
+      const a2 = app2.auth(); try{ await a2.setPersistence(firebase.auth.Auth.Persistence.NONE); }catch(e){}
+      await a2.createUserWithEmailAndPassword(`${u}@${EMAIL_DOMAIN}`, pw); await a2.signOut();
+    }catch(e){
+      btn.disabled=false; btn.textContent="Add user";
+      toast(e?.code==="auth/email-already-in-use" ? `A login for @${u} already exists in Firebase. Add them with another username, or delete the old login in the Firebase console first.` : e?.code==="auth/weak-password" ? "Firebase says that password is too weak. Try a longer one." : e?.code==="auth/operation-not-allowed" ? "Email/Password sign-in is off in Firebase. Turn it on in Authentication → Sign-in method." : "Couldn't create the login. Check your connection and try again.");
+      return;
+    }
+    if(await write(()=>db.collection("team").doc(u).set({name, role, active:true, addedOn:iso(TODAY), addedBy:S.me?.name||""}), `${name} added. They can sign in as ${u}.`, {act:"user", summary:`Added ${name} (@${u}) as ${ROLE_LABEL[role]}`})){
+      S.team[u]={name, role, active:true, addedOn:iso(TODAY)}; USERS[u]={name, role};
+    }
+    renderAdmin();
+  });
+}
+
+/* Admin · Budget report */
+function reportHTML(){
+  const P = S.rp, cur = thisMonth();
+  if(!P.from){ P.from = addMonths(cur,-5); P.to = cur; }
+  const months = monthsBetween(P.from, P.to).reverse();
+  const brands = P.brand ? BRANDS.filter(b=>b.key===P.brand) : BRANDS;
+  const row = ym => { const budget = brands.map(b=>budgetFor(b.key,ym)).filter(x=>x!=null); const B = budget.length ? budget.reduce((a,x)=>a+x,0) : null; const spent = brands.reduce((a,b)=>a+brandSpend(b.key,ym),0);
+    const deals = Object.values(S.campaigns).filter(k=>k.status!=="Cancelled" && spendMonth(k)===ym && brands.some(b=>b.name===k.brand)).length; return {ym, B, spent, deals}; };
+  const rows = months.map(row);
+  const tB = rows.reduce((a,r)=>a+(r.B||0),0), tS = rows.reduce((a,r)=>a+r.spent,0), tD = rows.reduce((a,r)=>a+r.deals,0);
+  const max = Math.max(1, ...rows.map(r=>Math.max(r.B||0, r.spent)));
+  const sel = P.sel && months.includes(P.sel) ? P.sel : null;
+  const label = P.brand ? BRANDS.find(b=>b.key===P.brand)?.name : "Company (all brands)";
+  return `
+    <div class="toolbar adm-filters">
+      <label class="tb"><span>From</span><input id="rpFrom" type="month" class="in" value="${esc(P.from)}"></label>
+      <label class="tb"><span>To</span><input id="rpTo" type="month" class="in" value="${esc(P.to)}"></label>
+      <label class="tb"><span>Brand</span><select id="rpBrand" class="in"><option value="">Company (all brands)</option>${BRANDS.map(b=>`<option value="${b.key}" ${P.brand===b.key?"selected":""}>${esc(b.name)}</option>`).join("")}</select></label>
+      <div class="league" role="group" aria-label="Quick ranges">${[[3,"3 months"],[6,"6 months"],[12,"12 months"]].map(([n,l])=>`<button type="button" data-rpq="${n}" aria-pressed="${P.from===addMonths(cur,1-n)&&P.to===cur}">${l}</button>`).join("")}</div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="v">${fmt$(tB,0)}</div><div class="k">Budget · ${esc(label)}</div></div>
+      <div class="kpi"><div class="v">${fmt$(tS,0)}</div><div class="k">Actually spent · ${tD} deal${tD!==1?"s":""}</div></div>
+      <div class="kpi"><div class="v" style="color:${tS>tB&&tB?"var(--bad)":"inherit"}">${tB?(tS>tB?"+":"")+fmt$(Math.abs(tS-tB),0):"—"}</div><div class="k">${tB?(tS>tB?"Over budget":"Left unspent"):"No budget set"}</div></div>
+      <div class="kpi"><div class="v">${tB?Math.round(tS/tB*100)+"%":"—"}</div><div class="k">Of budget used</div></div>
+    </div>
+    <p class="hint">Spend is the agreed deal price, counted in the month of the deal's first post (cancelled deals excluded). Click a month to see its deals and set budgets for that month only.</p>
+    <div class="rp-legend"><span><i class="rp-b"></i>Budget</span><span><i class="rp-s"></i>Spent</span><span><i class="rp-o"></i>Over budget</span></div>
+    <div class="rp-table" role="table">
+      <div class="rp-tr rp-head" role="row"><span>Month</span><span></span><span class="r">Budget</span><span class="r">Spent</span><span class="r">Left</span><span class="r">Deals</span></div>
+      ${rows.map(r=>{ const over = r.B!=null && r.spent>r.B; return `<button type="button" class="rp-tr ${sel===r.ym?"on":""}" data-rpm="${r.ym}" role="row">
+        <span><b>${esc(monthName(r.ym))}</b>${r.ym===cur?` <small class="hint">this month</small>`:""}</span>
+        <span class="rp-bars"><i class="rp-b" style="width:${(r.B||0)/max*100}%"></i><i class="${over?"rp-o":"rp-s"}" style="width:${r.spent/max*100}%"></i></span>
+        <span class="r num">${fmt$(r.B,0)}</span><span class="r num">${fmt$(r.spent,0)}</span>
+        <span class="r num" style="color:${over?"var(--bad)":"inherit"}">${r.B==null?"—":(over?"−":"")+fmt$(Math.abs(r.B-r.spent),0)}</span><span class="r num">${r.deals}</span></button>`; }).join("")}
+    </div>
+    ${!P.brand ? `<h3 class="pb-h" style="margin-top:24px">Spent per brand</h3>
+    <div class="tablewrap scrolly"><table class="rp-matrix"><thead><tr><th>Brand</th>${months.slice().reverse().map(m=>`<th class="r">${esc(new Date(m+"-01T00:00:00").toLocaleDateString("en-GB",{month:"short",year:"2-digit"}))}</th>`).join("")}<th class="r">Total</th></tr></thead>
+      <tbody>${BRANDS.map(b=>{ const vals=months.slice().reverse().map(m=>({s:brandSpend(b.key,m), B:budgetFor(b.key,m)})); const tot=vals.reduce((a,v)=>a+v.s,0);
+        return `<tr style="cursor:default"><td><i class="dot" style="background:${b.c}"></i> ${esc(b.name)}</td>${vals.map(v=>`<td class="r num ${v.B!=null&&v.s>v.B?"overcell":""}" title="${v.B!=null?`Budget ${fmt$(v.B,0)}`:"No budget"}">${v.s?fmt$(v.s,0):`<span class="hint">–</span>`}</td>`).join("")}<td class="r num"><b>${fmt$(tot,0)}</b></td></tr>`; }).join("")}</tbody></table></div>` : ""}
+    ${sel ? monthDetailHTML(sel) : ""}`;
+}
+function monthDetailHTML(ym){
+  const ks = Object.entries(S.campaigns).filter(([,k])=>k.status!=="Cancelled" && spendMonth(k)===ym).sort((a,b)=>(b[1].price||0)-(a[1].price||0));
+  const ov = S.settings.budgetMonths?.[ym] || {};
+  return `<section class="adm-card rp-detail" id="rpDetail">
+    <h3 class="pb-h">${esc(monthName(ym))}</h3>
+    <div class="adm-cols">
+      <div><div class="rc-sub" style="margin-top:0">Deals counted this month</div>
+        ${ks.length ? `<div class="att-list">${ks.map(([id,k])=>`<div class="att-row"><div><i class="dot" style="background:${bcol(k.brand)}"></i> <b>@${esc(k.handle)}</b> <small>${esc(k.brand)} · ${esc(k.package||"")}</small></div><span class="num">${k.price===0?"Free":fmt$(k.price,0)}</span><button type="button" class="btn sm ghost" data-ev-deal="${esc(id)}">Open</button></div>`).join("")}</div>` : `<p class="hint">No deals counted in this month.</p>`}</div>
+      <div><div class="rc-sub" style="margin-top:0">Budget for this month only</div>
+        <div class="rules-card">${BRANDS.map(b=>`<label class="rc-row"><span><i class="dot" style="background:${b.c}"></i> ${esc(b.name)}${Object.prototype.hasOwnProperty.call(ov,b.key)?` <small class="hint">set for this month</small>`:""}</span><span>$ <input class="in" data-mbud="${b.key}" type="number" min="0" step="10" placeholder="none" value="${esc(budgetFor(b.key, ym)??"")}"></span></label>`).join("")}
+        <p class="hint" style="margin:0">Only changes ${esc(monthName(ym))}. Other months keep the regular budget.</p></div></div>
+    </div></section>`;
+}
+function wireReport(){
+  const P = S.rp, cur = thisMonth();
+  $("#rpFrom").onchange=e=>{ if(e.target.value){ P.from=e.target.value; if(P.to<P.from) P.to=P.from; } renderAdmin(); };
+  $("#rpTo").onchange=e=>{ if(e.target.value){ P.to=e.target.value; if(P.from>P.to) P.from=P.to; } renderAdmin(); };
+  $("#rpBrand").onchange=e=>{ P.brand=e.target.value; renderAdmin(); };
+  document.querySelectorAll("[data-rpq]").forEach(b=>b.onclick=()=>{ const n=+b.dataset.rpq; P.from=addMonths(cur,1-n); P.to=cur; renderAdmin(); });
+  document.querySelectorAll("[data-rpm]").forEach(b=>b.onclick=()=>{ P.sel = P.sel===b.dataset.rpm ? null : b.dataset.rpm; renderAdmin(); if(P.sel) setTimeout(()=>document.getElementById("rpDetail")?.scrollIntoView({block:"start", behavior:"smooth"}),30); });
+  document.querySelectorAll("[data-mbud]").forEach(i=>i.addEventListener("change", ()=>{
+    const ym=P.sel, bk=i.dataset.mbud, name=BRANDS.find(b=>b.key===bk).name, v=i.value===""?null:Math.max(0,Number(i.value));
+    const bm = {...(S.settings.budgetMonths||{})}; bm[ym] = {...(bm[ym]||{}), [bk]:v};
+    saveSettings({budgetMonths:bm}, `${name} budget for ${monthName(ym)} saved`, `${name} budget for ${monthName(ym)} only: ${v==null?"none":fmt$(v,0)}`);
+    S.settings.budgetMonths=bm;
+  }));
 }
 function evHTML(e){
   const a = ACTS[e.act] || {l:e.act, i:"•", tone:""};
   const t = new Date(e.at).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
   const link = e.ref?.deal ? `<button type="button" class="linkbtn" data-ev-deal="${esc(e.ref.deal)}">Open deal</button>` : e.ref?.creator ? `<button type="button" class="linkbtn" data-ev-creator="${esc(e.ref.creator)}">Open creator</button>` : "";
-  return `<div class="ev ${a.tone}"><span class="ev-i" aria-hidden="true">${a.i}</span><div class="ev-b"><div><i class="av sm" style="background:${USER_COLORS[e.username]||"var(--muted)"}">${esc((e.user||"?")[0])}</i><b>${esc(e.user||e.username)}</b> <span class="ev-l">${esc(a.l)}</span></div><p>${esc(e.summary||"")}</p></div><div class="ev-r"><span class="num">${esc(t)}</span>${link}</div></div>`;
+  return `<div class="ev ${a.tone}"><span class="ev-i" aria-hidden="true">${a.i}</span><div class="ev-b"><div><i class="av sm" style="background:${userColor(e.username)}">${esc((e.user||"?")[0])}</i><b>${esc(e.user||e.username)}</b> <span class="ev-l">${esc(a.l)}</span></div><p>${esc(e.summary||"")}</p></div><div class="ev-r"><span class="num">${esc(t)}</span>${link}</div></div>`;
 }
 
 gateSetup();
