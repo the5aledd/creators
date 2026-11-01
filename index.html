@@ -1419,7 +1419,9 @@ function renderBoard(){
   const keepId = id => { const k=S.campaigns[id]; return k && inRange(lastDate(k), RG); };
   const ks = Object.entries(S.campaigns).filter(([id,k])=>k.status!=="Cancelled" && inRange(lastDate(k), RG)).map(([id,k])=>({id,k,m:campMetrics(k)}));
   const done = ks.filter(x=>x.m.cpm!=null);
-  const spend = ks.reduce((a,x)=>a+(x.k.price||0),0);
+  const bookedKs = Object.entries(S.campaigns).filter(([id,k])=>k.status!=="Cancelled" && inRange(spendDay(k,id), RG));
+  const spend = bookedKs.reduce((a,[,k])=>a+(k.price||0),0);
+  const perfSpend = ks.reduce((a,x)=>a+(x.k.price||0),0);
   const views = done.reduce((a,x)=>a+x.k.views,0);
   const shares = done.reduce((a,x)=>a+(x.k.shares||0),0);
   const spendDone = done.reduce((a,x)=>a+x.k.price,0);
@@ -1441,13 +1443,13 @@ function renderBoard(){
         <td class="r num">${fmt$(r.cpm)}</td><td class="r num">${fmt$(r.cps)}</td><td class="r num">${pct(r.spv)}</td><td class="r num">${fmtN(r.sv)}</td>
         <td class="num">${esc(r.lastS)}</td><td>${esc(r.brands)}</td></tr>`; }).join("")}</tbody></table></div>`; };
   $("#main").innerHTML = `
-  <div class="boardtop"><div><h2>Results</h2><p class="lede">${RG?`Deals whose latest post falls in <b>${esc(periodLabel(BP))}</b>.`:"Every deal so far."} Filter by month, week or day.</p></div>${periodHTML(BP)}</div>
+  <div class="boardtop"><div><h2>Results</h2><p class="lede">${RG?`Spend counts deals <b>booked</b> in ${esc(periodLabel(BP))}. Views, costs and the leaderboard count deals whose <b>latest post</b> falls in it.`:"Every deal so far."} Filter by month, week or day.</p></div>${periodHTML(BP)}</div>
   <div class="kpis">
-    <div class="kpi"><div class="v">${fmt$(spend,0)}</div><div class="k">Agreed spend · ${ks.length} deal${ks.length!==1?"s":""}</div></div>
+    <div class="kpi"><div class="v">${fmt$(spend,0)}</div><div class="k">Agreed spend · ${bookedKs.length} deal${bookedKs.length!==1?"s":""} booked</div></div>
     <div class="kpi"><div class="v">${fmtN(views)}</div><div class="k">Reel views (${done.length} posted)</div></div>
     <div class="kpi"><div class="v">${fmt$(views?spendDone/views*1000:null)}</div><div class="k">Blended cost per 1K views</div></div>
     <div class="kpi"><div class="v">${fmt$(shares?spendDone/shares:null)}</div><div class="k">Blended cost per share</div></div>
-    <div class="kpi"><div class="v">${orders?fmt$(spend/orders):"—"}</div><div class="k">${orders?`Cost per code use · ${orders} uses`:"Cost per code use · log promo-code uses"}</div></div>
+    <div class="kpi"><div class="v">${orders?fmt$(perfSpend/orders):"—"}</div><div class="k">${orders?`Cost per code use · ${orders} uses`:"Cost per code use · log promo-code uses"}</div></div>
   </div>
   ${budgetsHTML(RG ? RG[0].slice(0,7) : thisMonth())}
   <div class="section">
