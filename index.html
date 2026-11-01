@@ -2447,12 +2447,14 @@ function openCampaign(id, handle, unlockTerms, preBrand){
     <div class="dhead"><div style="min-width:0"><h2>${isNew?"Book a deal":`${igLink(k.handle,"big")} · ${esc(k.brand)}`}</h2><div class="sub">${isNew?"Lock the agreed terms. Your team then only adds posting dates and results.":`${stageHTML(k)} <span class="hint">${esc(dealRange(k))}</span>`}</div></div>
       <button class="btn ghost x" type="button" data-close aria-label="Close">✕</button></div>
     <div class="dbody">
+      ${!isNew && dealDay(id,k) && firstDate(k) && firstDate(k) < dealDay(id,k) ? `<div class="warnbox">A post here (${esc(fmtD(firstDate(k)))}) is dated before the deal day (${esc(fmtD(dealDay(id,k)))}). ${can("terms")?`Use <b>Edit terms</b> to set the real deal day, or fix the post date.`:"Ask the admin to set the real deal day."}</div>`:""}
       ${!isNew && k.typesToCheck ? `<div class="warnbox">Imported from the sheet, which didn't say which dates were reels and which were stories. I guessed the first date was the reel. Please confirm the post types below and save.</div>`:""}
 
       <section class="dsec">
         <div class="dsec-h"><span class="stepn">1</span><b>Deal terms</b>${termsLocked?`<span class="lock">🔒 Locked</span><button class="btn ghost" type="button" id="editTerms" style="margin-left:auto;padding:4px 12px">Edit terms</button>`:""}</div>
         ${termsLocked ? `<div class="dview">
             <div><span>Creator</span><b>${igLink(k.handle)}</b></div><div><span>Brand</span><b>${esc(k.brand)}</b></div>
+            <div><span>Deal day</span><b>${dealDay(id,k)?esc(fmtD(dealDay(id,k))):`<span class="hint">not recorded</span>`}</b></div>
             <div><span>Platform</span><b>${esc(k.platform||"Instagram")}</b></div><div><span>Price</span><b>${esc(priceTxt(k.price))}</b></div>
             <div><span>Package</span><b>${esc(k.package||pkgName({reels:reelDates(k).length,stories:delivs(k).length-reelDates(k).length})||"—")}</b></div>
             <div><span>Promo code</span><b>${k.hasCode?esc(k.promoCode||"Yes"):"No code"}</b></div>
@@ -2463,6 +2465,7 @@ function openCampaign(id, handle, unlockTerms, preBrand){
           <div class="grid2">
             ${lockCreator ? `<div class="field"><span>Creator</span><div class="locked">${igLink(k.handle)} <span class="lock">🔒</span><div class="hint">${esc(cr?.name||"")}</div></div><input type="hidden" id="k_h" value="${esc(k.handle)}"></div>`
               : `<label class="field"><span>Creator (from the roster)</span><input id="k_h" type="text" list="handles" value="" placeholder="Start typing @handle" autocomplete="off"><span class="hint">Not in the roster? <button class="linkbtn" type="button" id="onboardNew">Onboard them first</button></span></label>`}
+            <label class="field"><span>Deal day (the day you agreed the deal)</span><input id="k_bd" type="date" min="2024-01-01" max="${iso(TODAY)}" value="${esc(isNew ? iso(TODAY) : (dealDay(id,k)||""))}"><span class="hint">Today by default. Set it back if the deal was agreed earlier. Spend counts in this month.</span></label>
             <label class="field"><span>Brand</span><select id="k_b">${BRANDS.map(b=>opt(b.name,k.brand)).join("")}</select></label>
             <label class="field"><span>Platform</span><select id="k_pl">${platformOptions(lockCreator?k.handle:"", k.platform)}</select></label>
             <div class="field" id="pkgPick">${pkgPickHTML(lockCreator?k.handle:"")}</div>
@@ -2520,10 +2523,10 @@ function openCampaign(id, handle, unlockTerms, preBrand){
   $("#k_hc")?.addEventListener("change", e=>{ $("#codeBox").hidden = !e.target.checked; });
   $("#seeHow")?.addEventListener("click", e=>{ const b=$("#howBox"); b.hidden=!b.hidden; e.target.textContent=b.hidden?"See how":"Hide"; e.target.setAttribute("aria-expanded", String(!b.hidden)); });
   const updBudget = ()=>{ const el=$("#budgetHint"); if(!el) return; const bn=$("#k_b").value, bk=BNAME[bn], B=S.settings.budgets?.[bk];
-    const firstD=[...list.querySelectorAll(".dl-date")].map(i=>i.value).filter(Boolean).sort()[0]; const ym=((isNew ? iso(TODAY) : (dealDay(id,k) || firstD)) || iso(TODAY)).slice(0,7);
+    const firstD=[...list.querySelectorAll(".dl-date")].map(i=>i.value).filter(Boolean).sort()[0]; const ym=(($("#k_bd")?.value) || (isNew ? iso(TODAY) : (dealDay(id,k) || firstD)) || iso(TODAY)).slice(0,7);
     if(B==null){ el.textContent=""; return; } const spent=brandSpend(bk, ym, id), price=Number($("#k_price").value||0), left=B-spent-price;
     el.innerHTML = `${esc(bn)} · ${esc(monthName(ym))}: ${fmt$(spent,0)} already spent of ${fmt$(B,0)}. ${left>=0?`${fmt$(left,0)} left after this deal.`:`<b style="color:var(--bad)">${fmt$(-left,0)} over budget with this deal.</b>`}`; };
-  $("#k_b")?.addEventListener("change", updBudget); $("#k_price")?.addEventListener("input", updBudget); list.addEventListener("change", updBudget); updBudget();
+  $("#k_bd")?.addEventListener("change", updBudget); $("#k_b")?.addEventListener("change", updBudget); $("#k_price")?.addEventListener("input", updBudget); list.addEventListener("change", updBudget); updBudget();
   const curH = () => ($("#k_h").value||"").trim().replace(/^@/,"").toLowerCase();
   list.addEventListener("change", e=>{ if(e.target.matches(".dl-type")) e.target.closest(".dl").classList.toggle("is-story", e.target.value==="Story"); if(e.target.matches(".dl-type,.dl-date")) updUrlLock(e.target.closest(".dl")); });
   list.addEventListener("focusin", e=>{ if(e.target.matches(".dl-url") && e.target.readOnly) toast(`Reel links can only be added ${REELS_DAYS} days after the reel is posted.`); });
@@ -2570,6 +2573,19 @@ function openCampaign(id, handle, unlockTerms, preBrand){
     if(earlyLink){ toast(`The reel on ${fmtDs(earlyLink.date)} can get its link from ${fmtD(resultsOpenOn(earlyLink.date))}, ${REELS_DAYS} days after posting.`); return; }
     if(dl.some(d=>d.url && !/^https?:\/\/[^\s.]+\.[^\s]+$/i.test(d.url))){ toast("A post link doesn't look right. Paste the full link from Instagram, e.g. instagram.com/reel/…"); return; }
     if(!dl.length){ toast("Add at least one post, a reel or a story."); return; }
+    const bdIn = $("#k_bd") ? $("#k_bd").value : null;
+    if(bdIn!==null){
+      if(!bdIn && (isNew || dealDay(id,k))){ toast("Pick the deal day: the day you agreed the deal."); $("#k_bd").focus(); return; }
+      if(bdIn && bdIn > today){ toast("The deal day can't be in the future."); return; }
+    }
+    const dayOfDeal = bdIn!==null ? (bdIn || null) : dealDay(id,k);
+    if(dayOfDeal){
+      const early = dl.filter(d=>d.date && d.date < dayOfDeal);
+      const changed = early.filter(d=>{ const p=prevByUid[d.uid]; return !p || p.date!==d.date; });
+      // New or moved posts can't be before the deal day; old ones only block when the deal day itself is being edited.
+      const bad = bdIn!==null ? early : changed;
+      if(bad.length){ toast(`A post on ${fmtDs(bad[0].date)} is before the deal day (${fmtD(dayOfDeal)}). Change the deal day or the post date.`); return; }
+    }
     if(dl.some(d=>!d.date)){ toast("Every post needs a date. A planned date is fine."); return; }
     if(dl.some(d=>!/^\d{4}-\d{2}-\d{2}$/.test(d.date) || d.date<"2024-01-01" || d.date>"2030-12-31")){ toast("A posting date looks wrong. Pick it from the calendar."); return; }
     dl.sort((a,b)=>a.date.localeCompare(b.date) || (a.type==="Reel"?-1:1));
@@ -2584,7 +2600,7 @@ function openCampaign(id, handle, unlockTerms, preBrand){
       if(doc.hasCode && !doc.promoCode){ toast("Type the promo code, or untick the promo code box."); return; }
       const taken = doc.hasCode && codeTaken(doc.promoCode, id);
       if(taken){ toast(`Code ${doc.promoCode} is already used by @${taken[1].handle}'s ${taken[1].brand} deal. Pick a different code so orders aren't mixed up.`); return; }
-      if(isNew) doc.bookedOn = today;
+      if(bdIn) doc.bookedOn = bdIn;
       doc.name = doc.name || S.creators[h]?.name || "";
       doc.followersAtPost = doc.followersAtPost ?? S.creators[h]?.followers ?? null;
     }
@@ -2650,8 +2666,8 @@ function openCampaign(id, handle, unlockTerms, preBrand){
 function dealLog(isNew, k, doc, cid){
   const who = `@${doc.handle} · ${doc.brand}`;
   if(isNew) return {act:"book", summary:`Booked ${who} · ${priceTxt(doc.price)} · ${doc.package||"no posts"} · first post ${fmtDs(delivs(doc)[0]?.date)}`, ref:{deal:cid}};
-  const T = [["price","price",v=>priceTxt(v)],["brand","brand",v=>v],["platform","platform",v=>v||"Instagram"],["promoCode","promo code",v=>v||"none"]];
-  const tc = T.filter(([f])=>(k[f]??null)!==(doc[f]??null)).map(([f,l,fm])=>`${l} ${fm(k[f])} → ${fm(doc[f])}`);
+  const T = [["bookedOn","deal day",v=>v?fmtD(v):"not recorded"],["price","price",v=>priceTxt(v)],["brand","brand",v=>v],["platform","platform",v=>v||"Instagram"],["promoCode","promo code",v=>v||"none"]];
+  const tc = T.filter(([f,,fm])=>fm(k[f]??null)!==fm(doc[f]??null)).map(([f,l,fm])=>`${l} ${fm(k[f])} → ${fm(doc[f])}`);
   if(tc.length) return {act:"terms", summary:`${who}: ${tc.join(", ")}`, ref:{deal:cid}};
   const R = ["views","shares","saves","orders","onTime","storyViews"];
   if(R.some(f=>(k[f]??null)!==(doc[f]??null))) return {act:"results", summary:`${who}: ${fmtN(doc.views)} views · ${fmtN(doc.shares)} shares · ${fmtN(doc.saves)} saves${doc.hasCode&&doc.orders!=null?` · ${doc.orders} code uses`:""}${doc.onTime===false?" · posted late":""}`, ref:{deal:cid}};
