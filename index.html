@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#0C0D0C">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Zain:wght@400;700;800&display=swap">
 <style>
 [hidden]{display:none!important}
 /* Layout: operator console. Sticky header with tabs, filter rail + result list on Find, drawer editor on the right. */
@@ -750,11 +750,28 @@ table.compact{min-width:760px}
 .rmatrix tr{cursor:default} .rmatrix tr.rg td{background:var(--bg);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .rmatrix input[type=checkbox]{width:18px;height:18px;cursor:pointer} .rmatrix input:disabled{cursor:not-allowed}
 .rdel{display:block;margin:4px auto 0;font-size:11.5px}
+
+.agrchip{display:inline-block;margin-top:4px;font-size:11px;font-weight:700;border-radius:6px;padding:1px 7px;white-space:nowrap}
+.agrchip.notsent{background:var(--warn-bg);color:var(--warn)} .agrchip.due,.agrchip.expired{background:var(--bad-bg);color:var(--bad)} .agrchip.signed{background:var(--good-bg);color:var(--good)} .agrchip.void,.agrchip.loading{background:var(--sunk);color:var(--muted)}
+.dsec.agr{gap:10px} .agr-ic{width:26px;height:26px;border-radius:50%;background:var(--sunk);display:grid;place-items:center;font-size:13px}
+.dsec.agr.signed .agr-ic{background:var(--good-bg);color:var(--good)} .dsec.agr.due .agr-ic,.dsec.agr.notsent .agr-ic{background:var(--warn-bg);color:var(--warn)}
+.agr-no{font-size:12.5px;color:var(--muted);margin-left:6px}
+.agr-name{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)} .agr-name .btn{justify-self:start} .agr-name .in{width:100%}
+.agr-acts{display:flex;gap:8px;flex-wrap:wrap} .agr-acts a.btn{text-decoration:none}
+.agr-up{cursor:pointer} .agr-up.busy{opacity:.6;pointer-events:none}
+.adm-card .rules-card .field{min-width:0} .adm-card .rules-card .field .in{width:100%}
+.agr-warn{background:var(--bad-bg);color:var(--bad);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600}
+#agrLinkBox input{width:100%;font-size:13px}
+.t2-tag.agr{background:var(--warn-bg);color:var(--warn)}
+.sigpad{position:relative;height:200px;border:1.5px dashed var(--ember);border-radius:12px;background:#fff}
+.sigpad canvas{width:100%;height:100%;display:block;border-radius:12px;cursor:crosshair}
+.sigpad span{position:absolute;left:12px;bottom:8px;font-size:12px;color:var(--muted);pointer-events:none}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="agreement.js"></script>
 
 </head>
 <body>
@@ -770,6 +787,7 @@ table.compact{min-width:760px}
           <button class="avatar-btn" id="userBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="userMenu"><span class="whoami" id="whoami"></span><span class="caret" aria-hidden="true">▾</span></button>
           <div class="menu" id="userMenu" hidden>
             <div class="menu-who" id="menuWho"></div>
+            <button class="btn ghost" id="btnMySig" type="button" hidden style="justify-content:center">✍ My signature</button>
             <button class="lockbtn" id="btnLock" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.4" class="lk-dot"/></svg>Sign out</button>
           </div>
         </div>
@@ -1097,7 +1115,8 @@ async function boot(){
     const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); });
     S.campaigns=o; S.loaded.k=true; recompute(); render();
   }, e=>toast("Lost the live connection to campaigns. Reload the page.")));
-  unsubs.push(db.doc("settings/main").onSnapshot(s=>{ if(s.exists){ S.settings={cooldownWeeks:6, crossDays:14, ...s.data()}; syncBrands(); recompute(); render(); } }));
+  unsubs.push(db.collection("agreements").onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]={id:d.id, ...d.data()}; }); S.agr=o; S.loaded.a=true; if(S.loaded.c && S.loaded.k){ render(); setTimeout(maybeSyncDrive, 1500); } }, ()=>{ S.loaded.a=true; render(); }));
+  unsubs.push(db.doc("settings/main").onSnapshot(s=>{ if(s.exists){ S.settings={cooldownWeeks:6, crossDays:14, ...s.data()}; syncBrands(); recompute(); applyRole(); render(); } }));
 }
 function fail(t){ $("#main").innerHTML = `<div class="notice">${esc(t||"Couldn't reach the database. Check your connection and reload.")}</div>`; }
 
@@ -1470,7 +1489,7 @@ function catBoost(c){ return c.category==="Food" ? 2 : c.category==="Comedy" || 
 const DUE_RANK = {due:0, waiting:1, nodates:2, noreel:2, done:3};
 const bcol = name => BRANDS.find(b=>b.name===name)?.c||"var(--line)";
 const DEAL_COLS = [
-  {k:"due", label:"Stage", core:1, v:r=>({due:0,live:1,booked:2,done:3,cancelled:4})[stageOf(r.k).key], def:"asc", cell:r=>{ const L=lateDays(r.k); return `<td>${stageHTML(r.k)}${L>0?`<div><span class="latebadge">${L} day${L>1?"s":""} late</span></div>`:""}</td>`; }},
+  {k:"due", label:"Stage", core:1, v:r=>({due:0,live:1,booked:2,done:3,cancelled:4})[stageOf(r.k).key], def:"asc", cell:r=>{ const L=lateDays(r.k); return `<td>${stageHTML(r.k)}${L>0?`<div><span class="latebadge">${L} day${L>1?"s":""} late</span></div>`:""}${agrChip(r.k)}</td>`; }},
   {k:"booked", label:"Deal day", core:1, v:r=>dealDay(r.id,r.k)||"", cell:r=>{ const d=dealDay(r.id,r.k); return `<td class="num">${d?esc(fmtD(d)):`<span class="hint" title="Imported from the sheet, booking date unknown">—</span>`}</td>`; }},
   {k:"last", label:"Latest post", core:1, v:r=>lastDate(r.k), cell:r=>`<td class="num"><b style="font-weight:600">${esc(fmtD(lastDate(r.k)))}</b>${lastReel(r.k)&&lastReel(r.k)!==lastDate(r.k)?`<div class="hint">last reel ${esc(fmtDs(lastReel(r.k)))}</div>`:""}</td>`},
   {k:"posts", label:"Posts", v:r=>delivs(r.k).length, cell:r=>`<td style="font-size:12.5px">${esc(dealCounts(r.k))}</td>`},
@@ -1544,6 +1563,214 @@ function renderCampaigns(){
 }
 
 
+
+/* ---------- Creator agreements ---------- */
+S.agr = S.agr || {};
+const AGR_START = "2026-11-03";   // agreements apply to paid deals booked from this day on
+const LINK_HOURS = 72;   // a signing link works for 72 hours after it's sent; sending again gives a fresh 72 hours
+const tsMs = v => !v ? 0 : typeof v==="number" ? v : v.toMillis ? v.toMillis() : v.seconds ? v.seconds*1000 : 0;
+const fmtDT = ms => new Date(ms).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+const agrCfg = () => ({signatoryUser:"marlo", signatoryName:"Marla", driveUrl:"", driveToken:"", ...(S.settings.agreements||{})});
+const agrOf = k => k && k.agreementId ? (S.agr[k.agreementId] || {id:k.agreementId, no:k.agreementNo, status:"loading"}) : null;
+const randId = n => { const a=new Uint8Array(n); crypto.getRandomValues(a); return [...a].map(x=>"abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"[x%56]).join(""); };
+const signLink = a => `${location.origin}/sign.html?a=${a.id}`;
+function agrFields(cid, k){
+  const c = S.creators[k.handle]||{}, cfg = agrCfg();
+  return {dealId:cid, handle:k.handle, creatorName:(c.name||k.name||"").trim(), brand:k.brand, platform:k.platform||"Instagram",
+    deliverables:PLAgreement.deliverablesText(k.deliverables), price:k.price, currency:"USD", dealDate:dealDay(cid,k)||iso(TODAY), signatoryName:cfg.signatoryName};
+}
+function agrState(k){
+  const a = agrOf(k); if(!a) return null;
+  if(a.status==="void") return {key:"void", label:"Agreement void"};
+  if(a.status==="signed") return {key:"signed", label:"Agreement signed"};
+  if(a.status==="loading") return {key:"loading", label:"Agreement"};
+  if(!a.sentAt) return {key:"notsent", label:"Agreement not sent", days:daysSince(a.createdOn)};
+  if(tsMs(a.expiresAt) && Date.now() > tsMs(a.expiresAt)) return {key:"expired", label:"Link expired", days:daysSince(a.sentAt)};
+  return {key:"due", label:`Signature due · ${daysSince(a.sentAt)}d`, days:daysSince(a.sentAt)};
+}
+const agrChip = k => { const st=agrState(k); if(!st || k.status==="Cancelled") return ""; return `<div><span class="agrchip ${st.key}">${st.key==="signed"?"✓ ":st.key==="notsent"||st.key==="due"||st.key==="expired"?"✍ ":""}${esc(st.label)}</span></div>`; };
+function agrOpen(){ return Object.entries(S.campaigns).filter(([,k])=>k.status!=="Cancelled" && k.agreementId).map(([id,k])=>({id,k,a:agrOf(k),st:agrState(k)})).filter(x=>x.st && (x.st.key==="notsent"||x.st.key==="due"||x.st.key==="expired")); }
+async function createAgreement(cid, k){
+  const y = (dealDay(cid,k)||iso(TODAY)).slice(0,4), aid = randId(24);
+  const ref = db.collection("agreements").doc(aid), cref = db.collection("counters").doc("agreements");
+  let no = null;
+  await db.runTransaction(async tx => {
+    const cs = await tx.get(cref); const n = ((cs.exists && cs.data()["y"+y]) || 0) + 1;
+    no = `PL-CR-${y}-${String(n).padStart(4,"0")}`;
+    tx.set(cref, {["y"+y]:n}, {merge:true});
+    tx.set(ref, {...agrFields(cid,k), no, status:"open", createdOn:iso(TODAY), createdBy:S.me?.name||""});
+  });
+  await db.collection("campaigns").doc(cid).update({agreementId:aid, agreementNo:no});
+  logAct("agreement", `Agreement ${no} created for @${k.handle} · ${k.brand} (${priceTxt(k.price)})`, {deal:cid});
+  return {aid, no};
+}
+async function syncAgreement(cid, k){   // keep an unsigned agreement in step with the deal's terms
+  const a = agrOf(k); if(!a || a.status!=="open") return;
+  const F = agrFields(cid,k); const ch = Object.fromEntries(Object.entries(F).filter(([f,v])=>JSON.stringify(a[f]??null)!==JSON.stringify(v??null)));
+  if(Object.keys(ch).length) try{ await db.collection("agreements").doc(a.id).update(ch); }catch(e){}
+}
+const agrTermsDiffer = (cid,k) => { const a=agrOf(k); if(!a || a.status!=="signed") return null; const F=agrFields(cid,k);
+  const L={price:"fee", brand:"brand", deliverables:"content", dealDate:"deal date", platform:"platform"};
+  const d=Object.keys(L).filter(f=>String(a[f]??"")!==String(F[f]??"")); return d.length ? d.map(f=>L[f]) : null; };
+async function prepareSend(a){
+  const cfg = agrCfg(), patch = {};
+  if(!(a.creatorName||"").trim() || /^@/.test(a.creatorName)){ toast("Add the creator's full name first. It goes on the agreement."); return false; }
+  if(!a.plSig && !roleCan(USERS[cfg.signatoryUser]?.role, "agrSign")){ toast(`${cfg.signatoryName}'s role can't sign agreements. Pick a signer in Admin → Rules & budgets → Agreements.`); return false; }
+  if(!a.plSig){
+    let sig=null; try{ const d = await db.collection("signatures").doc(cfg.signatoryUser).get(); sig = d.exists ? d.data().img : null; }catch(e){}
+    if(!sig){ toast(`${cfg.signatoryName} needs to add her signature first: avatar menu → My signature.`); return false; }
+    Object.assign(patch, {plSig:sig, plSignedAt:iso(TODAY), signatoryName:cfg.signatoryName});
+  }
+  if(!a.sentAt) Object.assign(patch, {sentAt:iso(TODAY), sentBy:S.me?.name||""});
+  const renew = a.sentAt && tsMs(a.expiresAt) && Date.now() > tsMs(a.expiresAt);
+  Object.assign(patch, {expiresAt: firebase.firestore.Timestamp.fromMillis(Date.now()+LINK_HOURS*36e5), lastSentAt:iso(TODAY), lastSentBy:S.me?.name||""});
+  return await write(()=>db.collection("agreements").doc(a.id).update(patch), null,
+    !a.sentAt ? {act:"agreement", summary:`Agreement ${a.no} sent to @${a.handle}`, ref:{deal:a.dealId}} : renew ? {act:"agreement", summary:`New signing link for ${a.no} sent to @${a.handle} (the old one expired)`, ref:{deal:a.dealId}} : null);
+}
+// Google Drive: a small Apps Script web app on the owner's account receives files and files them by year and brand.
+async function driveUpload(name, mime, b64, a){
+  const cfg = agrCfg(); if(!cfg.driveUrl) throw new Error("nodrive");
+  const r = await fetch(cfg.driveUrl, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({token:cfg.driveToken, name, mime, data:b64, folder:["Creator Agreements", String(a.no||"").slice(6,10)||iso(TODAY).slice(0,4), a.brand||"Other"]})});
+  const j = await r.json(); if(!j.ok) throw new Error(j.error||"Drive refused the file"); return j;
+}
+const loadScript = src => new Promise((res,rej)=>{ if(document.querySelector(`script[src="${src}"]`)) return res(); const sc=document.createElement("script"); sc.src=src; sc.onload=res; sc.onerror=()=>rej(new Error("load "+src)); document.head.appendChild(sc); });
+async function agreementPDF(a){
+  await loadScript("https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js");
+  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+  const host = document.createElement("div"); host.style.cssText = "position:fixed;left:-12000px;top:0;width:794px;background:#fff;z-index:-1";
+  host.innerHTML = PLAgreement.render(a, {logo:"agreement-logo.png"}); document.body.appendChild(host);
+  try{
+    await document.fonts.ready;
+    await Promise.all([...host.querySelectorAll("img")].map(i=>i.complete?1:new Promise(r=>{ i.onload=i.onerror=r; })));
+    const node = host.firstElementChild;
+    const jpg = await htmlToImage.toJpeg(node, {pixelRatio:2, quality:0.92, backgroundColor:"#ffffff", width:794, height:1123});
+    const pdf = new jspdf.jsPDF({unit:"mm", format:"a4", compress:true});
+    pdf.setProperties({title:`Agreement ${a.no}`, subject:`Percent Labs creator agreement · @${a.handle} · ${a.brand}`});
+    pdf.addImage(jpg, "JPEG", 0, 0, 210, 297);
+    return pdf.output("datauristring").split(",")[1];
+  } finally { host.remove(); }
+}
+let driveBusy = false;
+async function maybeSyncDrive(){   // signed online → make the PDF and file it in Drive, once
+  if(driveBusy || !S.me || !db || !agrCfg().driveUrl || !(can("agrSend")||can("agrUpload"))) return;
+  const a = Object.values(S.agr||{}).find(a=>a.status==="signed" && !a.driveUrl && a.signedVia==="link" && !(a.driveLockAt && Date.now()-a.driveLockAt < 10*60e3));
+  if(!a) return;
+  driveBusy = true;
+  try{
+    await db.collection("agreements").doc(a.id).update({driveLockAt:Date.now()});
+    const b64 = await agreementPDF(a);
+    const r = await driveUpload(`${a.no} @${a.handle} - signed.pdf`, "application/pdf", b64, a);
+    await db.collection("agreements").doc(a.id).update({driveUrl:r.url, driveFileId:r.id||"", driveSavedOn:iso(TODAY)});
+    logAct("agreement", `Signed agreement ${a.no} (@${a.handle}) saved to Google Drive`, {deal:a.dealId});
+  }catch(e){ console.warn("Drive save failed", e); }
+  finally{ driveBusy = false; }
+}
+function agreementSectionHTML(id, k){
+  if(!id) return "";
+  const a = agrOf(k), st = agrState(k), cfg = agrCfg();
+  if(!a){
+    if(!(k.price>0) || isCancelled(k)) return "";
+    const eligible = (dealDay(id,k)||"") >= AGR_START;
+    return eligible ? `<section class="dsec agr"><div class="dsec-h"><span class="agr-ic">✍</span><b>Agreement</b></div>
+      <p class="hint" style="margin:0">No agreement for this deal yet.</p><div class="agr-acts"><button type="button" class="btn primary sm" data-agr="create">Create agreement</button></div></section>` : "";
+  }
+  if(a.status==="loading") return `<section class="dsec agr"><div class="dsec-h"><span class="agr-ic">✍</span><b>Agreement ${esc(a.no||"")}</b></div><p class="hint" style="margin:0">Loading…</p></section>`;
+  const live = delivs(k).some(d=>d.date<=iso(TODAY));
+  const differ = agrTermsDiffer(id,k);
+  const signedOn = a.signedAt && a.signedAt.toDate ? iso(a.signedAt.toDate()) : (a.signedOn||"");
+  return `<section class="dsec agr ${st.key}">
+    <div class="dsec-h"><span class="agr-ic">✍</span><b>Agreement</b> <span class="num agr-no">${esc(a.no||"")}</span><span class="agrchip ${st.key}" style="margin-left:auto">${esc(st.label)}</span></div>
+    ${st.key==="notsent" ? `<p class="hint" style="margin:0">Ready to send. ${esc(cfg.signatoryName)}'s signature is added when you send it.</p>` : ""}
+    ${st.key==="due" ? `<p class="hint" style="margin:0">Sent ${esc(fmtD(a.sentAt))}${a.sentBy?` by ${esc(a.sentBy)}`:""}. Waiting for @${esc(k.handle)} to sign. The link works until <b>${esc(fmtDT(tsMs(a.expiresAt)))}</b>.</p>` : ""}
+    ${st.key==="expired" ? `<p class="hint" style="margin:0">The signing link expired on <b>${esc(fmtDT(tsMs(a.expiresAt)))}</b> (${LINK_HOURS} hours after it was sent) and @${esc(k.handle)} hasn't signed. Send a new link: it works for another ${LINK_HOURS} hours, same agreement and number.</p>` : ""}
+    ${st.key==="signed" ? `<p class="hint" style="margin:0">Signed by <b>${esc(a.creatorSignedName||a.creatorName)}</b>${signedOn?` on ${esc(fmtD(signedOn))}`:""} ${a.signedVia==="upload"?"(signed copy uploaded)":"(online)"}.${a.driveUrl?"":agrCfg().driveUrl?" Saving the PDF to Google Drive…":" Google Drive isn't connected yet."}</p>` : ""}
+    ${st.key==="void" ? `<p class="hint" style="margin:0">This deal was cancelled, so the agreement is void and the signing link no longer works.</p>` : ""}
+    ${(st.key==="notsent"||st.key==="due"||st.key==="expired") && (!(a.creatorName||"").trim() || /^@/.test(a.creatorName)) ? `<div class="agr-name"><label class="field"><span>Creator's full name (goes on the agreement)</span><input class="in" id="agrNm" type="text" autocomplete="off" placeholder="e.g. Lana Haddad" value="${esc((S.creators[k.handle]||{}).name||"")}"></label><button type="button" class="btn primary sm" data-agr="name">Save name</button><p class="hint" style="margin:0">@${esc(k.handle)} has no name on the hub yet. It's saved to the creator's profile too.</p></div>` : ""}
+    ${(st.key==="notsent"||st.key==="due"||st.key==="expired") && live && !isCancelled(k) ? `<div class="agr-warn">A post is already live but the agreement isn't signed.</div>` : ""}
+    ${differ ? `<div class="agr-warn">The deal's ${esc(differ.join(", "))} changed after the agreement was signed. <button type="button" class="linkbtn" data-agr="reissue">Issue a new agreement</button></div>` : ""}
+    <div class="agr-acts">
+      ${st.key==="notsent"||st.key==="due"||st.key==="expired" ? `<button type="button" class="btn primary sm" data-agr="send">${st.key==="expired"?"Send a new link on WhatsApp":st.key==="due"?"Send again on WhatsApp":"Send on WhatsApp"}</button><button type="button" class="btn sm" data-agr="copy">${st.key==="expired"?"Copy a new link":"Copy signing link"}</button>` : ""}
+      <a class="btn sm" href="${esc(signLink(a))}&view=1" target="_blank" rel="noopener">View / print</a>
+      ${st.key==="signed" && a.driveUrl ? `<a class="btn sm" href="${esc(a.driveUrl)}" target="_blank" rel="noopener">Open in Google Drive ↗</a>` : ""}
+      ${st.key==="signed" && !a.driveUrl && agrCfg().driveUrl && a.signedVia==="link" ? `<button type="button" class="btn sm" data-agr="drive">Save to Drive now</button>` : ""}
+      ${st.key==="notsent"||st.key==="due"||st.key==="expired" ? `<label class="btn sm agr-up" id="agrUp">Upload signed copy<input type="file" accept="application/pdf,image/*" hidden id="agrFile"></label>` : ""}
+    </div>
+    <div id="agrLinkBox"></div>
+  </section>`;
+}
+function wireAgreement(id, k){
+  const a = agrOf(k);
+  if(a && a.status==="open" && (can("agrSend")||can("book")||can("terms"))){ const nm=((S.creators[k.handle]||{}).name||"").trim(); if(nm && nm!==a.creatorName) syncAgreement(id, S.campaigns[id]||k).then(()=>setTimeout(()=>{ if(document.querySelector(".dsec.agr")) openCampaign(id); },300)); }
+  document.querySelector('[data-agr="name"]')?.addEventListener("click", async e=>{
+    const v = ($("#agrNm").value||"").trim().replace(/\s+/g," ");
+    if(v.length<3 || /^@/.test(v)){ toast("Type the creator's full name (not the @handle)."); $("#agrNm").focus(); return; }
+    e.target.disabled=true;
+    const ok = await write(async()=>{ await cdoc(k.handle).update({name:v}); await db.collection("agreements").doc(a.id).update({creatorName:v}); }, "Name saved on the agreement", {act:"agreement", summary:`Added @${k.handle}'s full name (${v}) to agreement ${a.no}`, ref:{deal:id}});
+    if(ok){ if(S.creators[k.handle]) S.creators[k.handle].name=v; setTimeout(()=>openCampaign(id),300); } else e.target.disabled=false;
+  });
+  const btn = sel => document.querySelector(`[data-agr="${sel}"]`);
+  btn("create")?.addEventListener("click", async e=>{ e.target.disabled=true; try{ const r=await createAgreement(id, S.campaigns[id]||k); toast(`Agreement ${r.no} created`); openCampaign(id); }catch(err){ e.target.disabled=false; toast("Couldn't create the agreement. Check your connection and try again."); } });
+  btn("reissue")?.addEventListener("click", async e=>{ e.target.disabled=true; try{ await db.collection("agreements").doc(a.id).update({status:"void", voidReason:"Terms changed after signing", voidOn:iso(TODAY)}); const r=await createAgreement(id, S.campaigns[id]||k); toast(`New agreement ${r.no} created. Send it to the creator.`); openCampaign(id); }catch(err){ e.target.disabled=false; toast("Couldn't issue a new agreement. Try again."); } });
+  btn("send")?.addEventListener("click", async ()=>{
+    const w = window.open("about:blank", "_blank");
+    if(!(await prepareSend(a))){ w && w.close(); return; }
+    const c = S.creators[k.handle]||{}, first = (a.creatorName||"").split(" ")[0] || "";
+    const msg = `Hi ${first}, here's your Percent Labs agreement for ${a.brand} (No. ${a.no}). Please read it and sign here:\n${signLink(a)}\n\nمرحباً ${first}، هذه اتفاقيتك مع برسنت لابس لعلامة ${a.brand} (رقم ${a.no}). يرجى قراءتها والتوقيع عبر الرابط:\n${signLink(a)}`;
+    const url = c.phone && c.phone.num ? `https://wa.me/${(c.phone.cc+c.phone.num).replace(/\D/g,"")}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    if(w) w.location.href = url; else location.href = url;
+    toast(c.phone && c.phone.num ? "WhatsApp opened with the message ready." : "No phone saved for this creator. Pick the chat in WhatsApp.");
+    setTimeout(()=>{ if(document.querySelector(".dsec.agr")) openCampaign(id); }, 400);
+  });
+  btn("copy")?.addEventListener("click", async ()=>{
+    if(!(await prepareSend(a))) return;
+    const link = signLink(a);
+    try{ await navigator.clipboard.writeText(link); toast("Signing link copied. Paste it to the creator."); setTimeout(()=>{ if(document.querySelector(".dsec.agr")) openCampaign(id); }, 400); }
+    catch(e){ const b=$("#agrLinkBox"); b.innerHTML=`<input class="in" readonly value="${esc(link)}" aria-label="Signing link">`; const i=b.querySelector("input"); i.focus(); i.select(); toast("Copy the link from the box."); }
+  });
+  btn("drive")?.addEventListener("click", async e=>{ e.target.disabled=true; e.target.textContent="Saving…"; driveBusy=false; await db.collection("agreements").doc(a.id).update({driveLockAt:0}).catch(()=>{}); await maybeSyncDrive(); });
+  $("#agrFile")?.addEventListener("change", async e=>{
+    const file = e.target.files[0]; if(!file) return;
+    if(!agrCfg().driveUrl){ toast("Connect Google Drive first: Admin → Rules & budgets → Agreements."); return; }
+    if(file.size > 15e6){ toast("That file is over 15 MB. Send a smaller scan or photo."); return; }
+    const lab = $("#agrUp"); lab.classList.add("busy"); lab.firstChild.textContent = "Uploading…";
+    try{
+      const b64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(file); });
+      const ext = (file.name.split(".").pop()||"pdf").toLowerCase().slice(0,5);
+      const up = await driveUpload(`${a.no} @${a.handle} - signed copy.${ext}`, file.type||"application/pdf", b64, a);
+      await write(()=>db.collection("agreements").doc(a.id).update({status:"signed", signedVia:"upload", signedOn:iso(TODAY), creatorSignedName:a.creatorName, driveUrl:up.url, driveFileId:up.id||"", uploadedBy:S.me?.name||""}),
+        "Signed copy saved to Google Drive", {act:"agreement", summary:`Signed copy of ${a.no} (@${a.handle}) uploaded to Google Drive`, ref:{deal:id}});
+      openCampaign(id); return;
+    }catch(err){ toast(err.message==="nodrive" ? "Connect Google Drive first: Admin → Rules & budgets → Agreements." : "Upload failed. Check the Drive connection in Admin and try again."); }
+    lab.classList.remove("busy"); if(lab.firstChild) lab.firstChild.textContent = "Upload signed copy";
+  });
+}
+// "My signature": the signatory draws it once; it's stamped on every agreement when it's sent.
+function openMySignature(target){
+  const cfg = agrCfg(), me = (target && isAdmin()) ? target : S.me?.username, other = me!==S.me?.username, who = USERS[me]?.name || me;
+  drawer(`<div class="dhead"><div><h2>${other?`${esc(who)}'s signature`:"My signature"}</h2><div class="sub">${other?`You're replacing ${esc(who)}'s saved signature as admin.`:me===cfg.signatoryUser?`Added to every creator agreement you send for Percent Labs.`:`Only ${esc(cfg.signatoryName)}'s signature goes on agreements. You can still save yours.`}</div></div><button class="btn ghost x" type="button" data-close aria-label="Close">✕</button></div>
+    <div class="dbody"><div id="sigNow" class="hint">Loading…</div>
+      <div class="sigpad"><canvas id="mySig" aria-label="Signature pad"></canvas><span>Sign here</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button type="button" class="btn" id="sigClr">Clear</button><label class="btn">Upload a photo instead<input type="file" accept="image/*" hidden id="sigPhoto"></label></div>
+      <div id="sigPrev" hidden></div>
+      <p class="hint" style="margin:0">Draw with your finger or mouse, or sign on white paper and upload a photo of it. Agreements already sent keep the signature they were sent with.</p></div>
+    <div class="dfoot"><span class="sp"></span><button class="btn ghost" type="button" data-close>Close</button><button class="btn primary" type="button" id="sigSave">Save signature</button></div>`);
+  const pad = PLAgreement.signaturePad($("#mySig"));
+  db.collection("signatures").doc(me).get().then(d=>{ const el=$("#sigNow"); if(!el) return; el.innerHTML = d.exists && d.data().img ? `Current signature:<br><img src="${esc(d.data().img)}" alt="Your saved signature" style="max-height:60px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:4px;margin-top:4px">` : "No signature saved yet. Draw it below."; }).catch(()=>{ const el=$("#sigNow"); if(el) el.textContent=""; });
+  let photo = null;
+  $("#sigClr").onclick = () => { pad.clear(); photo=null; $("#sigPrev").hidden=true; };
+  $("#sigPhoto").onchange = e => { const fl=e.target.files[0]; if(!fl) return; const im=new Image(); im.onload=()=>{
+      const sc=Math.min(1, 1400/im.width), w=Math.round(im.width*sc), h=Math.round(im.height*sc), cv=document.createElement("canvas"); cv.width=w; cv.height=h; const x=cv.getContext("2d"); x.drawImage(im,0,0,w,h);
+      const d=x.getImageData(0,0,w,h), p=d.data; let x0=w,y0=h,x1=-1,y1=-1;
+      for(let i=0;i<p.length;i+=4){ const l=0.3*p[i]+0.59*p[i+1]+0.11*p[i+2]; if(l>150){ p[i+3]=0; } else { p[i]=p[i+1]=p[i+2]=12; p[i+3]=Math.min(255,Math.round((150-l)*2.2)+60); const q=i/4, px=q%w, py=(q-px)/w; if(px<x0)x0=px; if(px>x1)x1=px; if(py<y0)y0=py; if(py>y1)y1=py; } }
+      if(x1<0){ toast("Couldn't find a signature in that photo. Use dark ink on white paper."); return; }
+      x.putImageData(d,0,0); const m=8; x0=Math.max(0,x0-m); y0=Math.max(0,y0-m); x1=Math.min(w-1,x1+m); y1=Math.min(h-1,y1+m);
+      const o=document.createElement("canvas"); o.width=x1-x0+1; o.height=y1-y0+1; o.getContext("2d").drawImage(cv,x0,y0,o.width,o.height,0,0,o.width,o.height);
+      photo=o.toDataURL("image/png"); pad.clear(); const pv=$("#sigPrev"); pv.hidden=false; pv.innerHTML=`<span class="hint">From your photo:</span><br><img src="${photo}" alt="Signature from photo" style="max-height:70px;max-width:100%;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px">`;
+    }; im.src=URL.createObjectURL(fl); };
+  $("#sigSave").onclick = async () => { const img = pad.isEmpty() ? photo : pad.toPNG(); if(!img){ toast("Draw your signature or upload a photo first."); return; }
+    if(await write(()=>db.collection("signatures").doc(me).set({img, name:who, updatedOn:iso(TODAY), updatedBy:S.me.name}), "Signature saved", {act:"agreement", summary: other?`${S.me.name} replaced ${who}'s agreement signature`:`${S.me.name} updated their agreement signature`})) { closeDrawer(); if(other && S.tab==="admin") render(); } };
+}
+
 /* ---------- Deal day, late results, periods, budgets ---------- */
 const dealDay = (id,k) => k.bookedOn || (/^c[0-9a-z]{8,}$/.test(id||"") ? (()=>{ const t=parseInt(id.slice(1),36); return t>1.6e12 && t<2.2e12 ? iso(new Date(t)) : null; })() : null);
 // Everything that is past its collection day and still missing: reel results, reel links, code uses.
@@ -1553,6 +1780,7 @@ function lateItems(){
     const di=dueInfo(k); if(!di || !di.units) continue;
     for(const x of di.units) if(x.s==="due" && today>x.due) out.push({id,k,kind:"reel",date:x.u.date,due:x.due,late:daysBetween(x.due,today)});
     if(di.c==="due" && today>di.codeDue) out.push({id,k,kind:"code",due:di.codeDue,late:daysBetween(di.codeDue,today)});
+    if(k.agreementId && k.status!=="Cancelled"){ const st=agrState(k); if(st && (st.key==="notsent"||st.key==="due"||st.key==="expired") && (st.days>=3 || st.key==="expired")) out.push({id,k,kind:"agreement",due:null,late:st.days}); }
     if(!k.importedFromSheet) for(const d of delivs(k)) if(d.type==="Reel" && !d.url && today>resultsOpenOn(d.date)) out.push({id,k,kind:"link",date:d.date,due:resultsOpenOn(d.date),late:daysBetween(resultsOpenOn(d.date),today)});
   }
   return out.sort((a,b)=>b.late-a.late);
@@ -1560,9 +1788,9 @@ function lateItems(){
 function lateDays(k){ const today=iso(TODAY), di=dueInfo(k); if(!di||!di.units) return 0;
   let m=0; for(const x of di.units) if(x.s==="due" && today>x.due) m=Math.max(m,daysBetween(x.due,today));
   if(di.c==="due" && today>di.codeDue) m=Math.max(m,daysBetween(di.codeDue,today)); return m; }
-const LATE_LABEL = {reel:"Reel results", link:"Reel link", code:"Code uses"};
+const LATE_LABEL = {reel:"Reel results", link:"Reel link", code:"Code uses", agreement:"Agreement not signed"};
 function maybeLatePopup(){
-  if(!S.me || !S.loaded.k || maybeLatePopup.done) return;
+  if(!S.me || !S.loaded.k || !S.loaded.a || maybeLatePopup.done) return;
   maybeLatePopup.done = true;
   const items = lateItems(); if(!items.length) return;
   const key = "ch_late_"+S.me.username, today = iso(TODAY);
@@ -1668,7 +1896,7 @@ function scoreHTML(h){
 S.todayAll = S.todayAll || {}; S.doneCount = S.doneCount || 0; S.tdFilter = S.tdFilter || "all";
 function todayCounts(){
   const due = Object.values(S.campaigns).filter(k=>dueInfo(k)?.state==="due").length;
-  return {due, fu: followUps().length};
+  return {due: due + agrOpen().length, fu: followUps().length};
 }
 function todayData(){
   const today=iso(TODAY), wk=iso(addDays(today,6));
@@ -1685,7 +1913,8 @@ function todayData(){
 }
 function renderToday(){
   const D = todayData(), F = S.tdFilter;
-  const now = D.due.length + D.fu.length;
+  const AG = agrOpen();
+  const now = D.due.length + D.fu.length + AG.length;
   const house = (D.staleF.length?1:0) + D.checkTypes.length + (D.noLink.length?1:0);
   const hr = new Date().getHours(), hello = hr<12?"Good morning":hr<18?"Good afternoon":"Good evening";
   const bdot = name => `<i class="dot" style="background:${bcol(name)}"></i>`;
@@ -1707,6 +1936,10 @@ function renderToday(){
     ${show("now")||show("all") ? `<section class="t2-sec">
       <h3>Needs you now</h3>
       ${now ? `<div class="t2-list">
+        ${AG.map(({id,k,st})=>`<div class="t2-item">
+          <span class="t2-tag agr">Agreement</span>
+          <div class="t2-main"><b>@${esc(k.handle)}</b><small>${bdot(k.brand)}${esc(k.brand)} · ${st.key==="notsent"?"not sent yet":st.key==="expired"?"signing link expired, send a new one":`waiting for signature · ${st.days} day${st.days!==1?"s":""}`}</small></div>
+          <button type="button" class="btn ${st.key!=="due"?"primary":""} sm" data-deal="${esc(id)}">${st.key==="notsent"?"Send it":st.key==="expired"?"Resend":"Open deal"}</button></div>`).join("")}
         ${D.due.map(({id,k,di})=>`<div class="t2-item">
           <span class="t2-tag res">Results</span>
           <div class="t2-main"><b>@${esc(k.handle)}</b><small>${bdot(k.brand)}${esc(k.brand)} · ${di.r==="due"?`reel numbers due since ${esc(fmtDs(di.reelsDue))}`:`code uses due since ${esc(fmtDs(di.codeDue))}`}</small></div>
@@ -1853,6 +2086,19 @@ function rulesHTML(){
     </div>
   </section>
   <section class="adm-card">
+    <h3 class="pb-h">Agreements</h3>
+    ${(()=>{ const c=agrCfg(); return `<div class="rules-card">
+      <label class="field"><span>Signs for Percent Labs</span><select id="agU" class="in">${(()=>{ const L=signers(); if(!L.some(([u])=>u===c.signatoryUser)) L.unshift([c.signatoryUser,{name:(USERS[c.signatoryUser]?.name||c.signatoryUser)+" (role can't sign)"}]); return L.map(([u,x])=>`<option value="${esc(u)}" ${c.signatoryUser===u?"selected":""}>${esc(x.name)}</option>`).join(""); })()}</select><span class="hint">Only people whose role has "Sign agreements for Percent Labs" (Users &amp; access → Roles) are listed.</span></label>
+      <label class="field"><span>Name printed on agreements</span><input id="agN" class="in" type="text" value="${esc(c.signatoryName)}"></label>
+      <div class="field"><span>Signature on file</span><span id="agSig" class="hint">checking…</span><button type="button" class="btn sm" id="agSigEdit" style="justify-self:start">Replace signature</button></div>
+      <div class="rc-sub">Google Drive</div>
+      <label class="field"><span>Connector link (Apps Script web app URL)</span><input id="agD" class="in" type="url" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(c.driveUrl)}"></label>
+      <label class="field"><span>Connector key</span><input id="agK" class="in" type="text" value="${esc(c.driveToken)}" autocomplete="off" spellcheck="false"></label>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sm" id="agTest">Test connection</button><span class="hint" id="agTestOut">${c.driveUrl?"":"Not connected: signed agreements can't be filed yet."}</span></div>
+      <p class="hint" style="margin:0">Paid deals booked from ${esc(fmtD(AGR_START))} get a numbered agreement (PL-CR-year-0001…). Signed copies are filed in Drive under Creator Agreements / year / brand.</p>
+    </div>`; })()}
+  </section>
+  <section class="adm-card">
     <h3 class="pb-h">Brands</h3>
     <div class="brandlist">${BRANDS.map(b=>`<div class="bl-row"><i class="dot" style="background:${b.c}"></i><b>${esc(b.name)}</b>${b.custom?`<input type="color" class="bl-col" data-bcol="${esc(b.key)}" value="${esc(/^#[0-9a-f]{6}$/i.test(b.c)?b.c:"#888888")}" aria-label="${esc(b.name)} colour"><button type="button" class="linkbtn danger" data-barch="${esc(b.key)}">Remove</button>`:`<span class="hint">built in</span>`}</div>`).join("")}</div>
     <div class="addbrand-card">
@@ -1865,6 +2111,16 @@ function rulesHTML(){
   </section></div>`;
 }
 function wireRules(rerender){
+  const saveAgr = (patch, ok, summary) => { const next={...agrCfg(), ...patch}; S.settings.agreements=next; return saveSettings({agreements:next}, ok, summary); };
+  $("#agU")?.addEventListener("change", e=>{ const u=e.target.value; saveAgr({signatoryUser:u, signatoryName:USERS[u]?.name||u}, `${USERS[u]?.name||u} now signs agreements`, `Agreement signatory → ${USERS[u]?.name||u}`).then(()=>rerender()); });
+  $("#agSigEdit")?.addEventListener("click", ()=>openMySignature(agrCfg().signatoryUser));
+  $("#agN")?.addEventListener("change", e=>{ const v=e.target.value.trim(); if(v) saveAgr({signatoryName:v}, "Name saved", `Agreement signatory name → ${v}`); });
+  $("#agD")?.addEventListener("change", e=>saveAgr({driveUrl:e.target.value.trim()}, "Drive connector saved", "Updated the Google Drive connector link"));
+  $("#agK")?.addEventListener("change", e=>saveAgr({driveToken:e.target.value.trim()}, "Drive key saved", "Updated the Google Drive connector key"));
+  if($("#agSig")) db.collection("signatures").doc(agrCfg().signatoryUser).get().then(d=>{ const el=$("#agSig"); if(el) el.innerHTML = d.exists && d.data().img ? `<img src="${esc(d.data().img)}" alt="Saved signature" style="max-height:30px;background:#fff;border-radius:4px">` : `<b style="color:var(--bad)">Missing</b>: ${esc(agrCfg().signatoryName)} adds it from the avatar menu → My signature`; }).catch(()=>{});
+  $("#agTest")?.addEventListener("click", async ()=>{ const out=$("#agTestOut"), c=agrCfg(); if(!c.driveUrl){ out.textContent="Paste the connector link first."; return; } out.textContent="Testing…";
+    try{ const r = await fetch(c.driveUrl, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({token:c.driveToken, ping:true})}); const j = await r.json(); out.innerHTML = j.ok ? `<b style="color:var(--good)">Connected ✓</b> Files go to ${esc(j.folder||"Creator Agreements")} in ${esc(j.account||"your Drive")}.` : `<b style="color:var(--bad)">Refused:</b> ${esc(j.error||"check the key")}`; }
+    catch(e){ out.innerHTML = `<b style="color:var(--bad)">Couldn't reach it.</b> Check the link and that the web app is deployed for "Anyone".`; } });
   $("#cdw")?.addEventListener("change", e=>{ const n=Math.max(0,Math.min(52,parseInt(e.target.value)||0)); saveSettings({cooldownWeeks:n}, `Same-brand rest set to ${n} weeks`, `Same-brand rest: ${S.settings.cooldownWeeks??6} → ${n} weeks`); });
   $("#cxd")?.addEventListener("change", e=>{ const n=Math.max(0,Math.min(90,parseInt(e.target.value)||0)); saveSettings({crossDays:n}, `Rest between brands set to ${n} days`, `Rest between brands: ${S.settings.crossDays??14} → ${n} days`); });
   document.querySelectorAll("[data-budget]").forEach(i=>i.addEventListener("change", ()=>{
@@ -2509,6 +2765,7 @@ function openCampaign(id, handle, unlockTerms, preBrand){
       ${!isNew && SCORES[id]!=null ? (()=>{ const sc=SCORES[id], [cls,lab]=verdict(sc); return `<section class="dsec scorecard">
         <div class="dsec-h"><span class="ring" style="--p:${sc};--sc:${scoreColor(sc)}"><span>${sc}</span></span><div><b>Deal score</b> <span class="pill ${cls}">${lab}</span>${recompute.detail[id]?.free?` <span class="pill ugc">UGC</span>`:""}</div><button type="button" class="btn ghost" id="seeHow" aria-expanded="false" style="margin-left:auto;padding:4px 12px">See how</button></div>
         <div id="howBox" hidden>${breakdownHTML(id)}</div></section>`; })() : ""}
+      ${agreementSectionHTML(id, k)}
       <div id="delZone"></div>
     </div>
     <div class="dfoot">
@@ -2550,7 +2807,9 @@ function openCampaign(id, handle, unlockTerms, preBrand){
   wirePick();
   $("#k_h")?.addEventListener("change", ()=>{ const h=curH(), ok=!!S.creators[h]; $("#pkgPick").innerHTML = pkgPickHTML(ok?h:""); $("#k_pl").innerHTML = platformOptions(ok?h:"", ""); wirePick(); });
 
-  const setCancel = async (val) => { const doc={...k, status: val?"Cancelled":""}; doc.status = val ? "Cancelled" : derivedStatus({...doc, status:""}); if(await write(()=>db.collection("campaigns").doc(id).set(doc), val?"Deal cancelled":"Deal restored", {act: val?"cancel":"restore", summary:`${val?"Cancelled":"Restored"} @${k.handle}'s ${k.brand} deal (${priceTxt(k.price)})`, ref:{deal:id}})) closeDrawer(); };
+  const setCancel = async (val) => { const doc={...k, status: val?"Cancelled":""}; doc.status = val ? "Cancelled" : derivedStatus({...doc, status:""}); if(await write(()=>db.collection("campaigns").doc(id).set(doc), val?"Deal cancelled":"Deal restored", {act: val?"cancel":"restore", summary:`${val?"Cancelled":"Restored"} @${k.handle}'s ${k.brand} deal (${priceTxt(k.price)})`, ref:{deal:id}})){
+    const a = agrOf(k); if(a && a.status!=="loading") try{ if(val && a.status==="open") await db.collection("agreements").doc(a.id).update({status:"void", voidReason:"Deal cancelled", voidOn:iso(TODAY)}); if(!val && a.status==="void" && !a.creatorSig && a.voidReason==="Deal cancelled") await db.collection("agreements").doc(a.id).update({status:"open"}); }catch(e){}
+    closeDrawer(); } };
   $("#cancelBtn")?.addEventListener("click",()=>{
     $("#delZone").innerHTML = `<div class="confirm">Cancel this deal? It stays on record but isn't scored or counted.<span style="margin-left:auto"></span><button class="btn" type="button" id="cNo">Keep</button><button class="btn danger" type="button" id="cYes">Cancel deal</button>${can("delDeal")?`<button class="btn ghost" type="button" id="dDel" style="font-size:12px">Delete record</button>`:""}</div>`;
     $("#cNo").onclick=()=>$("#delZone").innerHTML=""; $("#cYes").onclick=()=>setCancel(true);
@@ -2558,6 +2817,7 @@ function openCampaign(id, handle, unlockTerms, preBrand){
     $("#delZone").scrollIntoView({block:"nearest"});
   });
   $("#restoreBtn")?.addEventListener("click",()=>setCancel(false));
+  if(!isNew) wireAgreement(id, k);
 
   $("#saveBtn").onclick = async ()=>{
     const h = curH();
@@ -2653,6 +2913,8 @@ function openCampaign(id, handle, unlockTerms, preBrand){
     const cid = id || ("c"+Date.now().toString(36));
     const ok = await write(()=>db.collection("campaigns").doc(cid).set(doc), isNew?"Deal booked":"Saved", dealLog(isNew, k, doc, cid));
     if(!ok) return;
+    if(isNew && doc.price>0 && can("agrSend")){ try{ const r = await createAgreement(cid, doc); toast(`Deal booked · agreement ${r.no} ready to send`); }catch(e){ toast("Deal booked, but the agreement couldn't be created. Open the deal and click Create agreement."); } }
+    else if(!isNew) await syncAgreement(cid, doc);
     if($("#k_rc") && !$("#rcBox").hidden && $("#k_rc").checked && doc.price!=null){
       const c=S.creators[h], p=comboOf(doc); const ps=packagesOf(c).filter(x=>!(x.reels===p.reels && x.stories===p.stories));
       const packages=[...ps, {reels:p.reels, stories:p.stories, price:doc.price, quotedOn:today, note:"from deal"}];
@@ -2694,7 +2956,7 @@ const BUILTIN_USERS = Object.keys(USERS);
 const PERMS = [
   {g:"Tabs they can open", items:[["tab_today","Today"],["tab_find","Find creators"],["tab_board","Leaderboard"],["tab_deals","Deals"]]},
   {g:"Creators", items:[["onboard","Onboard new creators"],["editCreator","Edit creator details & prices"],["outreach","Outreach status & follow-ups"],["followers","Update follower counts"],["dnb","Flag Do not book"],["delCreator","Delete creators"]]},
-  {g:"Deals", items:[["book","Book deals"],["results","Log post dates, links & results"],["terms","Change agreed deal terms"],["cancel","Cancel or restore deals"],["delDeal","Delete deals"]]},
+  {g:"Deals", items:[["book","Book deals"],["results","Log post dates, links & results"],["terms","Change agreed deal terms"],["cancel","Cancel or restore deals"],["delDeal","Delete deals"],["agrSend","Create & send agreements"],["agrSign","Sign agreements for Percent Labs"],["agrUpload","Upload signed agreements"]]},
 ];
 const PERM_KEYS = PERMS.flatMap(g=>g.items.map(i=>i[0]));
 const allPerms = v => Object.fromEntries(PERM_KEYS.map(k=>[k, v]));
@@ -2716,10 +2978,12 @@ function rolesAll(){
 const roleName = id => rolesAll()[id]?.name || (id ? id : "No role");
 const ROLE_LABEL = new Proxy({}, {get:(_,id)=>roleName(id)});
 const can = p => !!S.me && (S.me.role==="admin" || rolesAll()[S.me.role]?.perms?.[p]===true);
+const roleCan = (r,p) => r==="admin" || rolesAll()[r]?.perms?.[p]===true;
+const signers = () => Object.entries(USERS).filter(([u,x])=>x && x.active!==false && roleCan(x.role, "agrSign"));
 const TAB_PERM = {today:"tab_today", find:"tab_find", board:"tab_board", campaigns:"tab_deals"};
 const ID_PERM = {btnAddCreator:"onboard", btnAddCampaign:"book", editDetails:"editCreator", logBtn:"book", dnbBtn:"dnb", unDnb:"dnb", delBtn:"delCreator",
-  editTerms:"terms", cancelBtn:"cancel", restoreBtn:"cancel", dDel:"delDeal", fuStart:"outreach", onboardNew:"onboard", obBook:"book", bookFirst:"book"};
-const SEL_PERM = [["[data-bstat],#addBrand",'outreach',"disable"],[".sw-b,[data-fuone],.ob-b",'outreach',"hide"],["[data-fsave]",'followers',"hide"],["[data-fh]",'followers',"disable"]];
+  editTerms:"terms", cancelBtn:"cancel", restoreBtn:"cancel", dDel:"delDeal", fuStart:"outreach", onboardNew:"onboard", obBook:"book", bookFirst:"book", agrUp:"agrUpload"};
+const SEL_PERM = [["[data-agr=send],[data-agr=copy],[data-agr=create],[data-agr=reissue],[data-agr=drive]",'agrSend',"hide"],["[data-bstat],#addBrand",'outreach',"disable"],[".sw-b,[data-fuone],.ob-b",'outreach',"hide"],["[data-fsave]",'followers',"hide"],["[data-fh]",'followers',"disable"]];
 function gatePerms(){
   if(!S.me || S.me.role==="admin") return;
   for(const [id,p] of Object.entries(ID_PERM)){ const el=document.getElementById(id); if(el && !can(p)) el.hidden=true; }
@@ -2757,6 +3021,7 @@ function applyRole(){
   const adminTab = $('#tabs [data-tab="admin"]');
   if(adminTab) adminTab.hidden = !isAdmin();
   if(!isAdmin() && S.tab==="admin") S.tab="today";
+  const ms=$("#btnMySig"); if(ms) ms.hidden = !S.me || !can("agrSign");
   ["btnAddCreator","btnAddCampaign"].forEach(id=>{ const el=document.getElementById(id); if(el) el.hidden = !!S.me && !can(ID_PERM[id]); });
   const who=$("#whoami"); if(who) who.innerHTML = S.me ? `<i style="background:${userColor(S.me.username)}">${esc(S.me.name[0])}</i><span class="wn">${esc(S.me.name)}</span>` : "";
   const mw=$("#menuWho"); if(mw) mw.innerHTML = S.me ? `<b>${esc(S.me.name)}</b><small>@${esc(S.me.username)} · ${esc(ROLE_LABEL[S.me.role])}</small>` : "";
@@ -2806,6 +3071,7 @@ function gateSetup(){
 }
 $("#userBtn").addEventListener("click", e=>{ e.stopPropagation(); const m=$("#userMenu"); m.hidden=!m.hidden; $("#userBtn").setAttribute("aria-expanded", String(!m.hidden)); });
 document.addEventListener("click", e=>{ const m=$("#userMenu"); if(m && !m.hidden && !e.target.closest(".usermenu")){ m.hidden=true; $("#userBtn").setAttribute("aria-expanded","false"); } });
+$("#btnMySig").addEventListener("click", ()=>{ $("#userMenu").hidden=true; openMySignature(); });
 $("#btnLock").addEventListener("click", async ()=>{ $("#userMenu").hidden=true;
   if(S.me) await logAct("logout", `${S.me.name} signed out`);
   closeDrawer(); document.querySelector(".late-modal")?.remove(); maybeLatePopup.done=false; await FB?.auth.signOut();
@@ -2819,7 +3085,7 @@ const ACTS = {
   terms:{l:"Changed deal terms", i:"✎", tone:"warn"}, cancel:{l:"Cancelled deal", i:"⨯", tone:"bad"}, restore:{l:"Restored deal", i:"↺", tone:""},
   delete_deal:{l:"Deleted deal", i:"🗑", tone:"bad"}, onboard:{l:"Onboarded creator", i:"＋", tone:"good"}, edit_creator:{l:"Edited creator", i:"✎", tone:""},
   delete_creator:{l:"Deleted creator", i:"🗑", tone:"bad"}, status:{l:"Outreach update", i:"✉", tone:""}, followers:{l:"Follower update", i:"↑", tone:""},
-  settings:{l:"Changed rules, budget or brands", i:"⚙", tone:"warn"}, user:{l:"Changed users or access", i:"👤", tone:"warn"}, dnb:{l:"Flagged do not book", i:"⛔", tone:"bad"}, undnb:{l:"Removed do-not-book flag", i:"↺", tone:""}, login:{l:"Signed in", i:"→", tone:"muted"}, logout:{l:"Signed out", i:"←", tone:"muted"},
+  settings:{l:"Changed rules, budget or brands", i:"⚙", tone:"warn"}, user:{l:"Changed users or access", i:"👤", tone:"warn"}, agreement:{l:"Agreement", i:"✍", tone:""}, dnb:{l:"Flagged do not book", i:"⛔", tone:"bad"}, undnb:{l:"Removed do-not-book flag", i:"↺", tone:""}, login:{l:"Signed in", i:"→", tone:"muted"}, logout:{l:"Signed out", i:"←", tone:"muted"},
 };
 S.ad = S.ad || {period:7, from:"", to:"", user:"", act:"", important:false};
 S.adTab = S.adTab || "attention";
