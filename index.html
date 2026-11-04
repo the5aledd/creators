@@ -1641,9 +1641,22 @@ async function agreementPDF(a){
   host.innerHTML = PLAgreement.render(a, {logo:"agreement-logo.png"}); document.body.appendChild(host);
   try{
     await document.fonts.ready;
-    await Promise.all([...host.querySelectorAll("img")].map(i=>i.complete?1:new Promise(r=>{ i.onload=i.onerror=r; })));
-    const node = host.firstElementChild;
-    const jpg = await htmlToImage.toJpeg(node, {pixelRatio:2, quality:0.92, backgroundColor:"#ffffff", width:794, height:1123});
+    const imgs = [...host.querySelectorAll("img")];
+    await Promise.all(imgs.map(i=>i.complete?1:new Promise(r=>{ i.onload=i.onerror=r; })));
+    await Promise.all(imgs.map(i=>i.decode ? i.decode().catch(()=>{}) : 1));
+    const node = host.firstElementChild, base = node.getBoundingClientRect();
+    // Where each signature sits on the page, to check it really made it into the picture.
+    const sigBoxes = imgs.filter(i=>/^data:image/.test(i.src)).map(i=>{ const r=i.getBoundingClientRect(); return {x:r.left-base.left, y:r.top-base.top, w:r.width, h:r.height}; });
+    const opts = {pixelRatio:2, quality:0.92, backgroundColor:"#ffffff", width:794, height:1123, cacheBust:false};
+    const inkIn = async (jpg) => { const im=new Image(); im.src=jpg; await im.decode(); const c=document.createElement("canvas"); c.width=im.width; c.height=im.height; const x=c.getContext("2d"); x.drawImage(im,0,0);
+      return sigBoxes.every(b=>{ const d=x.getImageData(Math.round(b.x*2),Math.round(b.y*2),Math.max(1,Math.round(b.w*2)),Math.max(1,Math.round(b.h*2))).data; let n=0; for(let k=0;k<d.length;k+=16) if(d[k]+d[k+1]+d[k+2]<330) n++; return n>20; }); };
+    let jpg = null;
+    for(let t=0; t<4 && !jpg; t++){   // some browsers (Safari, background tabs) drop images on the first pass: render again until both signatures show
+      const j = await htmlToImage.toJpeg(node, opts);
+      if(t>0 && await inkIn(j)) jpg = j; else if(t===0 && sigBoxes.length===0) jpg = j;
+      if(!jpg) await new Promise(r=>setTimeout(r, 300));
+    }
+    if(!jpg) throw new Error("signature missing from the PDF render");
     const pdf = new jspdf.jsPDF({unit:"mm", format:"a4", compress:true});
     pdf.setProperties({title:`Agreement ${a.no}`, subject:`Percent Labs creator agreement · @${a.handle} · ${a.brand}`});
     pdf.addImage(jpg, "JPEG", 0, 0, 210, 297);
@@ -1652,6 +1665,7 @@ async function agreementPDF(a){
 }
 let driveBusy = false;
 async function maybeSyncDrive(){   // signed online → make the PDF and file it in Drive, once
+  if(document.hidden){ document.addEventListener("visibilitychange", ()=>setTimeout(maybeSyncDrive, 800), {once:true}); return; }
   if(driveBusy || !S.me || !db || !agrCfg().driveUrl || !(can("agrSend")||can("agrUpload"))) return;
   const a = Object.values(S.agr||{}).find(a=>a.status==="signed" && !a.driveUrl && a.signedVia==="link" && !(a.driveLockAt && Date.now()-a.driveLockAt < 10*60e3));
   if(!a) return;
