@@ -468,6 +468,9 @@ button.plink{cursor:pointer;font:inherit;font-size:12px}
 .count.hot{background:var(--ember);color:var(--on-ember);border-radius:999px;padding:1px 7px;font-weight:600}
 .hdr-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .usermenu{position:relative}
+.avatar-btn.has-alert{position:relative} .avatar-btn.has-alert::after{content:"";position:absolute;top:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:var(--ember);border:2px solid var(--bg)}
+#btnDriveAlert{color:var(--bad);font-weight:600}
+.att-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start}
 .avatar-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px 4px 4px;cursor:pointer;font:inherit;color:inherit}
 .avatar-btn:hover{border-color:var(--fg)} .avatar-btn:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
 .avatar-btn #whoami{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600}
@@ -787,6 +790,7 @@ table.compact{min-width:760px}
           <button class="avatar-btn" id="userBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="userMenu"><span class="whoami" id="whoami"></span><span class="caret" aria-hidden="true">▾</span></button>
           <div class="menu" id="userMenu" hidden>
             <div class="menu-who" id="menuWho"></div>
+            <button class="btn ghost danger-ghost" id="btnDriveAlert" type="button" hidden style="justify-content:center"></button>
             <button class="btn ghost" id="btnMySig" type="button" hidden style="justify-content:center">✍ My signature</button>
             <button class="lockbtn" id="btnLock" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.4" class="lk-dot"/></svg>Sign out</button>
           </div>
@@ -1115,7 +1119,7 @@ async function boot(){
     const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); });
     S.campaigns=o; S.loaded.k=true; recompute(); render();
   }, e=>toast("Lost the live connection to campaigns. Reload the page.")));
-  unsubs.push(db.collection("agreements").onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]={id:d.id, ...d.data()}; }); S.agr=o; S.loaded.a=true; if(S.loaded.c && S.loaded.k){ render(); setTimeout(maybeSyncDrive, 1500); } }, ()=>{ S.loaded.a=true; render(); }));
+  unsubs.push(db.collection("agreements").onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]={id:d.id, ...d.data()}; }); S.agr=o; S.loaded.a=true; try{ updateDriveAlert(); }catch(e){} if(S.loaded.c && S.loaded.k){ render(); setTimeout(maybeSyncDrive, 1500); } }, ()=>{ S.loaded.a=true; render(); }));
   unsubs.push(db.doc("settings/main").onSnapshot(s=>{ if(s.exists){ S.settings={cooldownWeeks:6, crossDays:14, ...s.data()}; syncBrands(); recompute(); applyRole(); render(); } }));
 }
 function fail(t){ $("#main").innerHTML = `<div class="notice">${esc(t||"Couldn't reach the database. Check your connection and reload.")}</div>`; }
@@ -1674,11 +1678,33 @@ async function maybeSyncDrive(){   // signed online → make the PDF and file it
     await db.collection("agreements").doc(a.id).update({driveLockAt:Date.now()});
     const b64 = await agreementPDF(a);
     const r = await driveUpload(`${a.no} @${a.handle} - signed.pdf`, "application/pdf", b64, a);
-    await db.collection("agreements").doc(a.id).update({driveUrl:r.url, driveFileId:r.id||"", driveSavedOn:iso(TODAY)});
+    await db.collection("agreements").doc(a.id).update({driveUrl:r.url, driveFileId:r.id||"", driveSavedOn:iso(TODAY), driveError:null});
     logAct("agreement", `Signed agreement ${a.no} (@${a.handle}) saved to Google Drive`, {deal:a.dealId});
-  }catch(e){ console.warn("Drive save failed", e); }
-  finally{ driveBusy = false; }
+  }catch(e){ console.warn("Drive save failed", e); try{ await db.collection("agreements").doc(a.id).update({driveError:String(e&&e.message||e).slice(0,300), driveErrorAt:Date.now(), driveErrorBy:S.me?.name||""}); }catch(_){} }
+  finally{ driveBusy = false; updateDriveAlert(); }
 }
+// Signed agreements that should be in Drive by now but aren't (10+ minutes after signing, or a save already failed).
+function driveStuck(){
+  return Object.values(S.agr||{}).filter(a=>a.status==="signed" && !a.driveUrl && (a.signedVia==="link") &&
+    (a.driveError || (tsMs(a.signedAt) && Date.now()-tsMs(a.signedAt) > 10*60e3)) && S.campaigns[a.dealId]?.status!=="Cancelled")
+    .sort((x,y)=>tsMs(x.signedAt)-tsMs(y.signedAt));
+}
+function driveReason(a){
+  const e = String(a.driveError||"");
+  if(!agrCfg().driveUrl) return "Google Drive isn't connected. Add the connector link and key in Rules & budgets → Agreements.";
+  if(!e) return "Not saved yet. Nobody with send access has had the hub open since it was signed, or the save is still running.";
+  if(/connector key/i.test(e)) return "The connector key doesn't match. Check the key in Rules & budgets → Agreements.";
+  if(/signature missing/i.test(e)) return "A signature didn't show up in the PDF, so it wasn't saved. Try again from a computer, with this tab on screen.";
+  if(/failed to fetch|networkerror|load failed|load http/i.test(e)) return "Couldn't reach Google Drive or the PDF tools (internet connection, or the connector is down).";
+  if(/permission|rechten|insufficient|not found/i.test(e)) return "Google Drive refused the file: the connector's permission or folder needs checking.";
+  return "Error: " + e;
+}
+function updateDriveAlert(){
+  const n = isAdmin() ? driveStuck().length : 0;
+  const ub = $("#userBtn"); if(ub) ub.classList.toggle("has-alert", n>0);
+  const mi = $("#btnDriveAlert"); if(mi){ mi.hidden = !n; mi.textContent = `⚠ ${n} agreement${n>1?"s":""} not saved to Drive`; }
+}
+setInterval(()=>{ try{ updateDriveAlert(); }catch(e){} }, 60000);
 function agreementSectionHTML(id, k){
   if(!id) return "";
   const a = agrOf(k), st = agrState(k), cfg = agrCfg();
@@ -3032,6 +3058,7 @@ async function logAct(act, summary, ref, extra){
   }catch(e){ /* logging never blocks work */ }
 }
 function applyRole(){
+  try{ updateDriveAlert(); }catch(e){}
   const adminTab = $('#tabs [data-tab="admin"]');
   if(adminTab) adminTab.hidden = !isAdmin();
   if(!isAdmin() && S.tab==="admin") S.tab="today";
@@ -3085,6 +3112,7 @@ function gateSetup(){
 }
 $("#userBtn").addEventListener("click", e=>{ e.stopPropagation(); const m=$("#userMenu"); m.hidden=!m.hidden; $("#userBtn").setAttribute("aria-expanded", String(!m.hidden)); });
 document.addEventListener("click", e=>{ const m=$("#userMenu"); if(m && !m.hidden && !e.target.closest(".usermenu")){ m.hidden=true; $("#userBtn").setAttribute("aria-expanded","false"); } });
+$("#btnDriveAlert").addEventListener("click", ()=>{ $("#userMenu").hidden=true; S.tab="admin"; S.adTab="attention"; render(); window.scrollTo({top:0}); });
 $("#btnMySig").addEventListener("click", ()=>{ $("#userMenu").hidden=true; openMySignature(); });
 $("#btnLock").addEventListener("click", async ()=>{ $("#userMenu").hidden=true;
   if(S.me) await logAct("logout", `${S.me.name} signed out`);
@@ -3121,15 +3149,15 @@ function attentionData(){
   const since = Date.now()-14*864e5;
   const review = (LOGS.events||[]).filter(e=>isImportant(e) && new Date(e.at)>=since && e.username!==S.me?.username).slice(0,12);
   const quiet = Object.entries(USERS).filter(([u,x])=>!x.inactive && u!==S.me?.username).map(([u,x])=>({u, x, last:(LOGS.events||[]).find(e=>e.username===u)?.at})).filter(t=>!t.last || Date.now()-new Date(t.last) > 14*864e5);
-  return {late, budgets, longFu, review, quiet, ym};
+  return {late, budgets, longFu, review, quiet, ym, drive: driveStuck()};
 }
-const adminAttentionCount = () => { const A=attentionData(); return A.late.length + A.budgets.filter(x=>x.spent>x.budget).length; };
+const adminAttentionCount = () => { const A=attentionData(); return A.late.length + A.budgets.filter(x=>x.spent>x.budget).length + A.drive.length; };
 const AD_TABS = [["attention","Needs attention"],["rules","Rules & budgets"],["activity","Activity"],["users","Users & access"],["report","Budget report"]];
 async function renderAdmin(){
   if(!isAdmin()){ S.tab="find"; return render(); }
   if(!LOGS.ok && !renderAdmin.loading){ renderAdmin.loading=true; $("#main").innerHTML = `<div class="notice">Loading…</div>`; await loadLogs(); renderAdmin.loading=false; if(S.tab!=="admin") return; }
   const T = S.adTab, nAtt = attentionData();
-  const nA = nAtt.late.length + nAtt.budgets.length + nAtt.review.length;
+  const nA = nAtt.late.length + nAtt.budgets.length + nAtt.review.length + nAtt.drive.length;
   $("#main").innerHTML = `
   <div class="adm">
     <div class="adm-head"><div><h2>Admin</h2><p class="lede">Only you see this tab.</p></div></div>
@@ -3148,10 +3176,11 @@ async function renderAdmin(){
 function attentionHTML(){
   const A = attentionData();
   const card = (tone, title, n, body) => `<section class="att ${tone}"><div class="att-h"><b>${title}</b><span class="att-n">${n}</span></div>${body}</section>`;
-  const all = A.late.length + A.budgets.length + A.review.length + A.longFu.length + A.quiet.length;
+  const all = A.late.length + A.budgets.length + A.review.length + A.longFu.length + A.quiet.length + A.drive.length;
   if(!all) return `<div class="t2-clear big"><span>✓</span><div><b>Nothing needs you right now.</b><small>Late results, budget alerts and important changes by the team show up here.</small></div></div>`;
   const byDeal = {}; A.late.forEach(x=>{ (byDeal[x.id] ||= []).push(x); });
   return `<div class="att-grid">
+    ${A.drive.length ? card("bad", "Signed agreements not in Google Drive", A.drive.length, `<p class="att-sub">Signed online but the PDF isn't in Drive yet. The signature itself is safe in the hub.</p><div class="att-list">${A.drive.map(a=>`<div class="att-row"><div><b>@${esc(a.handle)}</b> <small>${esc(a.brand)} · ${esc(a.no)}</small><div class="att-what">Signed ${tsMs(a.signedAt)?esc(relTime(new Date(tsMs(a.signedAt)).toISOString())):""} · ${esc(driveReason(a))}${a.driveErrorAt?` <span class="hint">(last try ${esc(relTime(new Date(a.driveErrorAt).toISOString()))}${a.driveErrorBy?` by ${esc(a.driveErrorBy)}`:""})</span>`:""}</div></div><div class="att-acts"><button type="button" class="btn sm primary" data-att-drive="${esc(a.id)}">Try again</button><button type="button" class="btn sm" data-ev-deal="${esc(a.dealId)}">Open deal</button></div></div>`).join("")}</div>`) : ""}
     ${A.late.length ? card("bad", "Late submissions", A.late.length, `<p class="att-sub">Results, links or code uses past their collection day.</p><div class="att-list">${Object.entries(byDeal).map(([id,xs])=>`<div class="att-row"><div><b>@${esc(xs[0].k.handle)}</b> <small>${esc(xs[0].k.brand)}</small><div class="att-what">${xs.map(x=>`${esc(LATE_LABEL[x.kind])}${x.date?` (reel ${esc(fmtDs(x.date))})`:""} · <em>${x.late}d late</em>`).join("<br>")}</div></div><button type="button" class="btn sm" data-ev-deal="${esc(id)}">Open</button></div>`).join("")}</div>`) : ""}
     ${A.budgets.length ? card("warn", `Budgets · ${esc(monthName(A.ym))}`, A.budgets.length, `<div class="att-list">${A.budgets.map(x=>`<div class="att-row"><div><i class="dot" style="background:${x.b.c}"></i> <b>${esc(x.b.name)}</b><div class="att-what">${fmt$(x.spent,0)} of ${fmt$(x.budget,0)} · ${x.spent>x.budget?`<em>${fmt$(x.spent-x.budget,0)} over</em>`:`${Math.round(x.spent/x.budget*100)}% used`}</div></div></div>`).join("")}</div><button type="button" class="linkbtn" data-adtab-go="report">See the budget report</button>`) : ""}
     ${A.review.length ? card("warn", "Changes to review", A.review.length, `<p class="att-sub">Changed terms, cancellations, deletions and flags by the team in the last 14 days.</p><div class="feed">${A.review.map(evHTML).join("")}</div>`) : ""}
@@ -3159,7 +3188,16 @@ function attentionHTML(){
     ${A.quiet.length ? card("", "Quiet teammates", A.quiet.length, `<p class="att-sub">No activity in the last 14 days.</p><div class="att-list">${A.quiet.map(t=>`<div class="att-row"><div><b>${esc(t.x.name)}</b> <small>@${esc(t.u)}</small><div class="att-what">${t.last?`last active ${esc(relTime(t.last))}`:"never signed in"}</div></div></div>`).join("")}</div>`) : ""}
   </div>`;
 }
-function wireAttention(){ $("#attFu")?.addEventListener("click",()=>{ S.tab="today"; render(); followUpMode(0); }); }
+function wireAttention(){ $("#attFu")?.addEventListener("click",()=>{ S.tab="today"; render(); followUpMode(0); });
+  document.querySelectorAll("[data-att-drive]").forEach(b=>b.addEventListener("click", async ()=>{
+    if(!agrCfg().driveUrl){ toast("Connect Google Drive first: Rules & budgets → Agreements."); return; }
+    b.disabled=true; b.textContent="Saving…";
+    try{ await db.collection("agreements").doc(b.dataset.attDrive).update({driveLockAt:0, driveError:null}); }catch(e){}
+    if(S.agr[b.dataset.attDrive]) Object.assign(S.agr[b.dataset.attDrive], {driveLockAt:0, driveError:null});
+    driveBusy=false; await maybeSyncDrive();
+    const a=S.agr[b.dataset.attDrive]; toast(a && a.driveUrl ? "Saved to Google Drive" : "Still not saved. See the reason on the card.");
+    if(S.tab==="admin") renderAdmin();
+  })); }
 
 /* Admin · Activity */
 function activityHTML(){
