@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Percent Labs Agreement</title>
+<title>Percent Labs</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.png" type="image/png" sizes="32x32">
 <meta name="theme-color" content="#0C0D0C">
@@ -77,27 +77,29 @@ button{font:inherit;cursor:pointer}
   window.addEventListener("resize", fit);
   function paper(a){ return `<div class="paper"><div class="paper-in">${A.render(a)}</div></div>`; }
   function show(a){
-    $("#no").textContent = a.no ? "Agreement No. "+a.no : "";
-    if(a.status==="void"){ app.innerHTML = banner("bad","This agreement was cancelled by Percent Labs.","ألغت برسنت لابس هذه الاتفاقية.") + paper(a); fit(); return; }
+    $("#no").textContent = a.no ? (a.kind==="receipt" ? "Receipt No. " : "Agreement No. ")+a.no : "";
+    const RC = a.kind==="receipt", ready = RC ? !!a.sentAt : !!a.plSig;
+    if(a.status==="void"){ app.innerHTML = (RC ? banner("bad","This receipt was cancelled by Percent Labs.","ألغت برسنت لابس هذا الإيصال.") : banner("bad","This agreement was cancelled by Percent Labs.","ألغت برسنت لابس هذه الاتفاقية.")) + paper(a); fit(); return; }
     if(a.status==="signed"){
       const when = a.signedAt && a.signedAt.toDate ? A.longDate(a.signedAt.toDate().toISOString()) : "";
       app.innerHTML = (viewOnly ? `<div class="row noprint"><span class="muted">Signed${when?" on "+A.esc(when):""}.</span><button class="btn" id="pr" type="button">Print or save as PDF</button></div>`
         : banner("ok", `Signed${when?" on "+when:""}. Thank you!`, "تم التوقيع. شكراً لك!")) + paper(a);
       fit(); $("#pr")?.addEventListener("click",()=>window.print()); return;
     }
-    if(viewOnly){ app.innerHTML = `<div class="row noprint"><span class="muted">${a.plSig?"Waiting for the creator's signature.":"Not sent to the creator yet."}</span><button class="btn" id="pr" type="button">Print or save as PDF</button></div>` + paper(a); fit(); $("#pr").onclick=()=>window.print(); return; }
+    if(viewOnly){ app.innerHTML = `<div class="row noprint"><span class="muted">${ready?"Waiting for the creator's signature.":"Not sent to the creator yet."}</span><button class="btn" id="pr" type="button">Print or save as PDF</button></div>` + paper(a); fit(); $("#pr").onclick=()=>window.print(); return; }
     const exp = a.expiresAt ? (a.expiresAt.toMillis ? a.expiresAt.toMillis() : a.expiresAt.seconds*1000) : 0;
-    if(a.plSig && exp && Date.now() > exp){ app.innerHTML = banner("bad","This signing link has expired. Ask Percent Labs to send you a new one.","انتهت صلاحية رابط التوقيع. اطلب من برسنت لابس إرسال رابط جديد."); return; }
-    if(a.plSig && !(a.creatorName||"").trim()){ app.innerHTML = banner("info","This agreement isn't ready to sign yet. Percent Labs will send you the link.","هذه الاتفاقية ليست جاهزة للتوقيع بعد. سترسل لك برسنت لابس الرابط."); return; }
-    if(!a.plSig){ app.innerHTML = banner("info","This agreement isn't ready to sign yet. Percent Labs will send you the link.","هذه الاتفاقية ليست جاهزة للتوقيع بعد. سترسل لك برسنت لابس الرابط.") ; return; }
-    app.innerHTML = banner("info", `Please read the agreement for ${a.brand} and sign at the bottom.`, `يرجى قراءة الاتفاقية مع ${a.brand} والتوقيع في الأسفل.`) + paper(a) + `
+    if(ready && exp && Date.now() > exp){ app.innerHTML = banner("bad","This signing link has expired. Ask Percent Labs to send you a new one.","انتهت صلاحية رابط التوقيع. اطلب من برسنت لابس إرسال رابط جديد."); return; }
+    if(ready && !(a.creatorName||"").trim()){ app.innerHTML = banner("info", RC ? "This receipt isn't ready to sign yet. Percent Labs will send you the link." : "This agreement isn't ready to sign yet. Percent Labs will send you the link.", RC ? "هذا الإيصال ليس جاهزاً للتوقيع بعد. سترسل لك برسنت لابس الرابط." : "هذه الاتفاقية ليست جاهزة للتوقيع بعد. سترسل لك برسنت لابس الرابط."); return; }
+    if(!ready){ app.innerHTML = banner("info", RC ? "This receipt isn't ready to sign yet. Percent Labs will send you the link." : "This agreement isn't ready to sign yet. Percent Labs will send you the link.", RC ? "هذا الإيصال ليس جاهزاً للتوقيع بعد. سترسل لك برسنت لابس الرابط." : "هذه الاتفاقية ليست جاهزة للتوقيع بعد. سترسل لك برسنت لابس الرابط.") ; return; }
+    app.innerHTML = (RC ? banner("info", `Please check the details and sign at the bottom to confirm you received your payment from Percent Labs for ${a.brand}.`, `يرجى مراجعة التفاصيل والتوقيع في الأسفل لتأكيد استلامك المبلغ من برسنت لابس مقابل محتوى ${a.brand}.`)
+                        : banner("info", `Please read the agreement for ${a.brand} and sign at the bottom.`, `يرجى قراءة الاتفاقية مع ${a.brand} والتوقيع في الأسفل.`)) + paper(a) + `
       <section class="panel" aria-labelledby="sgT">
-        <h2 id="sgT"><span>Sign the agreement</span><span class="ar">توقيع الاتفاقية</span></h2>
+        <h2 id="sgT">${RC ? `<span>Confirm and sign</span><span class="ar">التأكيد والتوقيع</span>` : `<span>Sign the agreement</span><span class="ar">توقيع الاتفاقية</span>`}</h2>
         <div class="f nmro"><span class="lab"><span>Signing as</span><span class="ar">التوقيع باسم</span></span><div class="nmv" id="nmv">${A.esc(a.creatorName)}</div><span class="muted">Not your name or spelled wrong? Don't sign. Tell Percent Labs and they'll fix it and send a new link. · إذا كان الاسم خاطئاً لا توقّع، وأخبر برسنت لابس لتصحيحه.</span></div>
         <div class="f" style="display:grid;gap:5px;font-size:13px;font-weight:600"><span class="lab"><span>Your signature (draw with your finger)</span><span class="ar">توقيعك (ارسمه بإصبعك)</span></span>
           <div class="pad"><canvas id="cv" aria-label="Signature pad"></canvas><div class="hint"><span>Sign here</span><span class="ar">وقّع هنا</span></div></div>
           <div class="row"><span class="muted" id="padState">Nothing drawn yet</span><button type="button" class="btn" id="clr">Clear · مسح</button></div></div>
-        <label class="check"><input type="checkbox" id="ok"><span>I have read this agreement and agree to its terms. My electronic signature is binding (term 06).<span class="ar" style="display:block;text-align:right">قرأت هذه الاتفاقية وأوافق على شروطها، وتوقيعي الإلكتروني مُلزِم (البند 06).</span></span></label>
+        <label class="check"><input type="checkbox" id="ok"><span>${RC ? `I confirm I have received the full amount shown above from Percent Labs for this content. My electronic signature is binding.<span class="ar" style="display:block;text-align:right">أؤكد أنني استلمت كامل المبلغ المذكور أعلاه من برسنت لابس مقابل هذا المحتوى، وتوقيعي الإلكتروني مُلزِم.</span>` : `I have read this agreement and agree to its terms. My electronic signature is binding (term 06).<span class="ar" style="display:block;text-align:right">قرأت هذه الاتفاقية وأوافق على شروطها، وتوقيعي الإلكتروني مُلزِم (البند 06).</span>`}</span></label>
         <div class="err" id="er" role="alert"></div>
         <button type="button" class="btn primary" id="sg">Sign · توقيع</button>
         <span class="muted">The date and time are recorded automatically when you sign.${exp?` This link works until ${A.esc(new Date(exp).toLocaleString("en-GB",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}))}.`:""}</span>

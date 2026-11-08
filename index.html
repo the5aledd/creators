@@ -980,6 +980,7 @@ function campMetrics(k){
   t.cpo = k.hasCode && k.orders!=null && p ? (k.orders>0 ? p/k.orders : Infinity) : null;
   t.roas = p && k.hasCode && k.revenue>0 ? k.revenue/p : null;
   t.ontime = k.onTime==null ? null : (k.onTime?1:0);
+  t.react = k.reaction==null ? null : (k.reaction?1:0);
   return t;
 }
 const fmtCost = v => v===Infinity ? "none" : fmt$(v);
@@ -988,8 +989,9 @@ const METRICS = [
   {k:"cps",  label:"Cost per share",    w:.20, lower:true,  fmt:fmtCost, how:"Reel's share of the price ÷ its shares", unit:true},
   {k:"spv",  label:"Shares ÷ views",    w:.20, lower:false, fmt:pct,     how:"Reel's shares ÷ its views", unit:true},
   {k:"cpsv", label:"Cost per save",     w:.15, lower:true,  fmt:fmtCost, how:"Reel's share of the price ÷ its saves", unit:true},
-  {k:"cpo",  label:"Cost per code use", w:.15, lower:true,  fmt:fmtCost, how:"Deal price ÷ orders that used the creator's code. Only for deals with a code."},
+  {k:"cpo",  label:"Cost per code use", w:.10, lower:true,  fmt:fmtCost, how:"Deal price ÷ orders that used the creator's code. Only for deals with a code."},
   {k:"ontime",label:"Posted on time",   w:.05, fixed:true,  fmt:v=>v?"Yes":"No, late", how:"Yes = full points for this part, late = none"},
+  {k:"react", label:"Quick audience reaction", w:.05, fixed:true, fmt:v=>v?"Yes":"No", how:"The team's call after the post: a quick spike in Instagram DMs, new followers in a short time, etc. Yes = full points, no = none"},
 ];
 const UNIT_METRICS = METRICS.filter(M=>M.unit);
 const CONTENT_W = UNIT_METRICS.reduce((a,M)=>a+M.w,0); // 0.80
@@ -1007,7 +1009,7 @@ const UGC_METRICS = [
   {k:"spv",  label:"Shares ÷ views",    w:.30, lower:false, fmt:pct, how:"Reel's shares ÷ its views", unit:true},
   {k:"svpv", label:"Saves ÷ views",     w:.30, lower:false, fmt:pct, how:"Reel's saves ÷ its views", unit:true},
 ];
-const UGC_CODE = {k:"upk", label:"Code uses per 1K views", w:.15, lower:false, fmt:v=>v.toFixed(2), how:"Orders with their code ÷ reel views × 1,000"};
+const UGC_CODE = {k:"upk", label:"Code uses per 1K views", w:.10, lower:false, fmt:v=>v.toFixed(2), how:"Orders with their code ÷ reel views × 1,000"};
 const isFreeDeal = k => k.price===0;
 function ugcUnitMetrics(u, fol){
   return { vpf: u.views>0 && fol>0 ? u.views/fol : null, spv: u.views>0 && u.shares!=null ? u.shares/u.views : null, svpv: u.views>0 && u.saves!=null ? u.saves/u.views : null };
@@ -1039,6 +1041,8 @@ function computeScores(){
       parts.push(cv==null ? {...CODE, v:null} : r ? {...CODE, v:cv, ...r} : {...CODE, v:cv, pct:null});
       const ot = k.onTime==null ? null : (k.onTime?1:0);
       parts.push(ot==null ? {...METRICS[5], v:null} : {...METRICS[5], v:ot, pct:ot});
+      const rx = k.reaction==null ? null : (k.reaction?1:0);
+      parts.push(rx==null ? {...METRICS[6], v:null} : {...METRICS[6], v:rx, pct:rx});
       const used = parts.filter(p=>p.pct!=null), wsum = used.reduce((a,p)=>a+p.w,0);
       used.forEach(p=>{ p.eff=p.w/wsum; p.pts=100*p.eff*p.pct; });
       out[id] = {score: Math.round(used.reduce((a,p)=>a+p.pts,0)), parts, units, wsum, free};
@@ -1568,9 +1572,9 @@ function renderCampaigns(){
 
 
 
-/* ---------- Creator agreements ---------- */
+/* ---------- Creator receipts ---------- */
 S.agr = S.agr || {};
-const AGR_START = "2026-11-03";   // agreements apply to paid deals booked from this day on
+const AGR_START = "2026-11-03";   // receipts apply to paid deals booked from this day on
 const LINK_HOURS = 72;   // a signing link works for 72 hours after it's sent; sending again gives a fresh 72 hours
 const tsMs = v => !v ? 0 : typeof v==="number" ? v : v.toMillis ? v.toMillis() : v.seconds ? v.seconds*1000 : 0;
 const fmtDT = ms => new Date(ms).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
@@ -1585,10 +1589,10 @@ function agrFields(cid, k){
 }
 function agrState(k){
   const a = agrOf(k); if(!a) return null;
-  if(a.status==="void") return {key:"void", label:"Agreement void"};
-  if(a.status==="signed") return {key:"signed", label:"Agreement signed"};
-  if(a.status==="loading") return {key:"loading", label:"Agreement"};
-  if(!a.sentAt) return {key:"notsent", label:"Agreement not sent", days:daysSince(a.createdOn)};
+  if(a.status==="void") return {key:"void", label:"Receipt void"};
+  if(a.status==="signed") return {key:"signed", label:"Receipt signed"};
+  if(a.status==="loading") return {key:"loading", label:"Receipt"};
+  if(!a.sentAt) return {key:"notsent", label:"Receipt not sent", days:daysSince(a.createdOn)};
   if(tsMs(a.expiresAt) && Date.now() > tsMs(a.expiresAt)) return {key:"expired", label:"Link expired", days:daysSince(a.sentAt)};
   return {key:"due", label:`Signature due · ${daysSince(a.sentAt)}d`, days:daysSince(a.sentAt)};
 }
@@ -1602,13 +1606,13 @@ async function createAgreement(cid, k){
     const cs = await tx.get(cref); const n = ((cs.exists && cs.data()["y"+y]) || 0) + 1;
     no = `PL-CR-${y}-${String(n).padStart(4,"0")}`;
     tx.set(cref, {["y"+y]:n}, {merge:true});
-    tx.set(ref, {...agrFields(cid,k), no, status:"open", createdOn:iso(TODAY), createdBy:S.me?.name||""});
+    tx.set(ref, {...agrFields(cid,k), kind:"receipt", no, status:"open", createdOn:iso(TODAY), createdBy:S.me?.name||""});
   });
   await db.collection("campaigns").doc(cid).update({agreementId:aid, agreementNo:no});
-  logAct("agreement", `Agreement ${no} created for @${k.handle} · ${k.brand} (${priceTxt(k.price)})`, {deal:cid});
+  logAct("agreement", `Receipt ${no} created for @${k.handle} · ${k.brand} (${priceTxt(k.price)})`, {deal:cid});
   return {aid, no};
 }
-async function syncAgreement(cid, k){   // keep an unsigned agreement in step with the deal's terms
+async function syncAgreement(cid, k){   // keep an unsigned receipt in step with the deal's terms
   const a = agrOf(k); if(!a || a.status!=="open") return;
   const F = agrFields(cid,k); const ch = Object.fromEntries(Object.entries(F).filter(([f,v])=>JSON.stringify(a[f]??null)!==JSON.stringify(v??null)));
   if(Object.keys(ch).length) try{ await db.collection("agreements").doc(a.id).update(ch); }catch(e){}
@@ -1619,8 +1623,8 @@ const agrTermsDiffer = (cid,k) => { const a=agrOf(k); if(!a || a.status!=="signe
 async function prepareSend(a){
   const cfg = agrCfg(), patch = {};
   if(!(a.creatorName||"").trim() || /^@/.test(a.creatorName)){ toast("Add the creator's full name first. It goes on the agreement."); return false; }
-  if(!a.plSig && !roleCan(USERS[cfg.signatoryUser]?.role, "agrSign")){ toast(`${cfg.signatoryName}'s role can't sign agreements. Pick a signer in Admin → Rules & budgets → Agreements.`); return false; }
-  if(!a.plSig){
+  if(a.kind!=="receipt" && !a.plSig && !roleCan(USERS[cfg.signatoryUser]?.role, "agrSign")){ toast(`${cfg.signatoryName}'s role can't sign agreements. Pick a signer in Admin → Rules & budgets → Agreements.`); return false; }
+  if(a.kind!=="receipt" && !a.plSig){
     let sig=null; try{ const d = await db.collection("signatures").doc(cfg.signatoryUser).get(); sig = d.exists ? d.data().img : null; }catch(e){}
     if(!sig){ toast(`${cfg.signatoryName} needs to add her signature first: avatar menu → My signature.`); return false; }
     Object.assign(patch, {plSig:sig, plSignedAt:iso(TODAY), signatoryName:cfg.signatoryName});
@@ -1629,7 +1633,7 @@ async function prepareSend(a){
   const renew = a.sentAt && tsMs(a.expiresAt) && Date.now() > tsMs(a.expiresAt);
   Object.assign(patch, {expiresAt: firebase.firestore.Timestamp.fromMillis(Date.now()+LINK_HOURS*36e5), lastSentAt:iso(TODAY), lastSentBy:S.me?.name||""});
   return await write(()=>db.collection("agreements").doc(a.id).update(patch), null,
-    !a.sentAt ? {act:"agreement", summary:`Agreement ${a.no} sent to @${a.handle}`, ref:{deal:a.dealId}} : renew ? {act:"agreement", summary:`New signing link for ${a.no} sent to @${a.handle} (the old one expired)`, ref:{deal:a.dealId}} : null);
+    !a.sentAt ? {act:"agreement", summary:`Receipt ${a.no} sent to @${a.handle}`, ref:{deal:a.dealId}} : renew ? {act:"agreement", summary:`New signing link for ${a.no} sent to @${a.handle} (the old one expired)`, ref:{deal:a.dealId}} : null);
 }
 // Google Drive: a small Apps Script web app on the owner's account receives files and files them by year and brand.
 async function driveUpload(name, mime, b64, a){
@@ -1662,7 +1666,7 @@ async function agreementPDF(a){
     }
     if(!jpg) throw new Error("signature missing from the PDF render");
     const pdf = new jspdf.jsPDF({unit:"mm", format:"a4", compress:true});
-    pdf.setProperties({title:`Agreement ${a.no}`, subject:`Percent Labs creator agreement · @${a.handle} · ${a.brand}`});
+    pdf.setProperties({title:`${a.kind==="receipt"?"Receipt":"Agreement"} ${a.no}`, subject:`Percent Labs creator ${a.kind==="receipt"?"payment receipt":"agreement"} · @${a.handle} · ${a.brand}`});
     pdf.addImage(jpg, "JPEG", 0, 0, 210, 297);
     return pdf.output("datauristring").split(",")[1];
   } finally { host.remove(); }
@@ -1679,11 +1683,11 @@ async function maybeSyncDrive(){   // signed online → make the PDF and file it
     const b64 = await agreementPDF(a);
     const r = await driveUpload(`${a.no} @${a.handle} - signed.pdf`, "application/pdf", b64, a);
     await db.collection("agreements").doc(a.id).update({driveUrl:r.url, driveFileId:r.id||"", driveSavedOn:iso(TODAY), driveError:null});
-    logAct("agreement", `Signed agreement ${a.no} (@${a.handle}) saved to Google Drive`, {deal:a.dealId});
+    logAct("agreement", `Signed receipt ${a.no} (@${a.handle}) saved to Google Drive`, {deal:a.dealId});
   }catch(e){ console.warn("Drive save failed", e); try{ await db.collection("agreements").doc(a.id).update({driveError:String(e&&e.message||e).slice(0,300), driveErrorAt:Date.now(), driveErrorBy:S.me?.name||""}); }catch(_){} }
   finally{ driveBusy = false; updateDriveAlert(); }
 }
-// Signed agreements that should be in Drive by now but aren't (10+ minutes after signing, or a save already failed).
+// Signed receipts that should be in Drive by now but aren't (10+ minutes after signing, or a save already failed).
 function driveStuck(){
   return Object.values(S.agr||{}).filter(a=>a.status==="signed" && !a.driveUrl && (a.signedVia==="link") &&
     (a.driveError || (tsMs(a.signedAt) && Date.now()-tsMs(a.signedAt) > 10*60e3)) && S.campaigns[a.dealId]?.status!=="Cancelled")
@@ -1702,7 +1706,7 @@ function driveReason(a){
 function updateDriveAlert(){
   const n = isAdmin() ? driveStuck().length : 0;
   const ub = $("#userBtn"); if(ub) ub.classList.toggle("has-alert", n>0);
-  const mi = $("#btnDriveAlert"); if(mi){ mi.hidden = !n; mi.textContent = `⚠ ${n} agreement${n>1?"s":""} not saved to Drive`; }
+  const mi = $("#btnDriveAlert"); if(mi){ mi.hidden = !n; mi.textContent = `⚠ ${n} receipt${n>1?"s":""} not saved to Drive`; }
 }
 setInterval(()=>{ try{ updateDriveAlert(); }catch(e){} }, 60000);
 function agreementSectionHTML(id, k){
@@ -1711,23 +1715,23 @@ function agreementSectionHTML(id, k){
   if(!a){
     if(!(k.price>0) || isCancelled(k)) return "";
     const eligible = (dealDay(id,k)||"") >= AGR_START;
-    return eligible ? `<section class="dsec agr"><div class="dsec-h"><span class="agr-ic">✍</span><b>Agreement</b></div>
-      <p class="hint" style="margin:0">No agreement for this deal yet.</p><div class="agr-acts"><button type="button" class="btn primary sm" data-agr="create">Create agreement</button></div></section>` : "";
+    return eligible ? `<section class="dsec agr"><div class="dsec-h"><span class="agr-ic">✍</span><b>Receipt</b></div>
+      <p class="hint" style="margin:0">No receipt for this deal yet.</p><div class="agr-acts"><button type="button" class="btn primary sm" data-agr="create">Create receipt</button></div></section>` : "";
   }
-  if(a.status==="loading") return `<section class="dsec agr"><div class="dsec-h"><span class="agr-ic">✍</span><b>Agreement ${esc(a.no||"")}</b></div><p class="hint" style="margin:0">Loading…</p></section>`;
+  if(a.status==="loading") return `<section class="dsec agr"><div class="dsec-h"><span class="agr-ic">✍</span><b>Receipt ${esc(a.no||"")}</b></div><p class="hint" style="margin:0">Loading…</p></section>`;
   const live = delivs(k).some(d=>d.date<=iso(TODAY));
   const differ = agrTermsDiffer(id,k);
   const signedOn = a.signedAt && a.signedAt.toDate ? iso(a.signedAt.toDate()) : (a.signedOn||"");
   return `<section class="dsec agr ${st.key}">
-    <div class="dsec-h"><span class="agr-ic">✍</span><b>Agreement</b> <span class="num agr-no">${esc(a.no||"")}</span><span class="agrchip ${st.key}" style="margin-left:auto">${esc(st.label)}</span></div>
-    ${st.key==="notsent" ? `<p class="hint" style="margin:0">Ready to send. ${esc(cfg.signatoryName)}'s signature is added when you send it.</p>` : ""}
+    <div class="dsec-h"><span class="agr-ic">✍</span><b>Receipt</b> <span class="num agr-no">${esc(a.no||"")}</span><span class="agrchip ${st.key}" style="margin-left:auto">${esc(st.label)}</span></div>
+    ${st.key==="notsent" ? `<p class="hint" style="margin:0">${a.kind==="receipt" ? `Send it when you pay @${esc(k.handle)}: by signing, the creator confirms they received the full ${esc(priceTxt(a.price))}.` : `Ready to send. ${esc(cfg.signatoryName)}'s signature is added when you send it.`}</p>` : ""}
     ${st.key==="due" ? `<p class="hint" style="margin:0">Sent ${esc(fmtD(a.sentAt))}${a.sentBy?` by ${esc(a.sentBy)}`:""}. Waiting for @${esc(k.handle)} to sign. The link works until <b>${esc(fmtDT(tsMs(a.expiresAt)))}</b>.</p>` : ""}
-    ${st.key==="expired" ? `<p class="hint" style="margin:0">The signing link expired on <b>${esc(fmtDT(tsMs(a.expiresAt)))}</b> (${LINK_HOURS} hours after it was sent) and @${esc(k.handle)} hasn't signed. Send a new link: it works for another ${LINK_HOURS} hours, same agreement and number.</p>` : ""}
+    ${st.key==="expired" ? `<p class="hint" style="margin:0">The signing link expired on <b>${esc(fmtDT(tsMs(a.expiresAt)))}</b> (${LINK_HOURS} hours after it was sent) and @${esc(k.handle)} hasn't signed. Send a new link: it works for another ${LINK_HOURS} hours, same receipt and number.</p>` : ""}
     ${st.key==="signed" ? `<p class="hint" style="margin:0">Signed by <b>${esc(a.creatorSignedName||a.creatorName)}</b>${signedOn?` on ${esc(fmtD(signedOn))}`:""} ${a.signedVia==="upload"?"(signed copy uploaded)":"(online)"}.${a.driveUrl?"":agrCfg().driveUrl?" Saving the PDF to Google Drive…":" Google Drive isn't connected yet."}</p>` : ""}
-    ${st.key==="void" ? `<p class="hint" style="margin:0">This deal was cancelled, so the agreement is void and the signing link no longer works.</p>` : ""}
-    ${(st.key==="notsent"||st.key==="due"||st.key==="expired") && (!(a.creatorName||"").trim() || /^@/.test(a.creatorName)) ? `<div class="agr-name"><label class="field"><span>Creator's full name (goes on the agreement)</span><input class="in" id="agrNm" type="text" autocomplete="off" placeholder="e.g. Lana Haddad" value="${esc((S.creators[k.handle]||{}).name||"")}"></label><button type="button" class="btn primary sm" data-agr="name">Save name</button><p class="hint" style="margin:0">@${esc(k.handle)} has no name on the hub yet. It's saved to the creator's profile too.</p></div>` : ""}
-    ${(st.key==="notsent"||st.key==="due"||st.key==="expired") && live && !isCancelled(k) ? `<div class="agr-warn">A post is already live but the agreement isn't signed.</div>` : ""}
-    ${differ ? `<div class="agr-warn">The deal's ${esc(differ.join(", "))} changed after the agreement was signed. <button type="button" class="linkbtn" data-agr="reissue">Issue a new agreement</button></div>` : ""}
+    ${st.key==="void" ? `<p class="hint" style="margin:0">This deal was cancelled, so the receipt is void and the signing link no longer works.</p>` : ""}
+    ${(st.key==="notsent"||st.key==="due"||st.key==="expired") && (!(a.creatorName||"").trim() || /^@/.test(a.creatorName)) ? `<div class="agr-name"><label class="field"><span>Creator's full name (goes on the receipt)</span><input class="in" id="agrNm" type="text" autocomplete="off" placeholder="e.g. Lana Haddad" value="${esc((S.creators[k.handle]||{}).name||"")}"></label><button type="button" class="btn primary sm" data-agr="name">Save name</button><p class="hint" style="margin:0">@${esc(k.handle)} has no name on the hub yet. It's saved to the creator's profile too.</p></div>` : ""}
+    ${(st.key==="notsent"||st.key==="due"||st.key==="expired") && live && !isCancelled(k) ? `<div class="agr-warn">A post is already live but the receipt isn't signed.</div>` : ""}
+    ${differ ? `<div class="agr-warn">The deal's ${esc(differ.join(", "))} changed after the receipt was signed. <button type="button" class="linkbtn" data-agr="reissue">Issue a new receipt</button></div>` : ""}
     <div class="agr-acts">
       ${st.key==="notsent"||st.key==="due"||st.key==="expired" ? `<button type="button" class="btn primary sm" data-agr="send">${st.key==="expired"?"Send a new link on WhatsApp":st.key==="due"?"Send again on WhatsApp":"Send on WhatsApp"}</button><button type="button" class="btn sm" data-agr="copy">${st.key==="expired"?"Copy a new link":"Copy signing link"}</button>` : ""}
       <a class="btn sm" href="${esc(signLink(a))}&view=1" target="_blank" rel="noopener">View / print</a>
@@ -1745,17 +1749,20 @@ function wireAgreement(id, k){
     const v = ($("#agrNm").value||"").trim().replace(/\s+/g," ");
     if(v.length<3 || /^@/.test(v)){ toast("Type the creator's full name (not the @handle)."); $("#agrNm").focus(); return; }
     e.target.disabled=true;
-    const ok = await write(async()=>{ await cdoc(k.handle).update({name:v}); await db.collection("agreements").doc(a.id).update({creatorName:v}); }, "Name saved on the agreement", {act:"agreement", summary:`Added @${k.handle}'s full name (${v}) to agreement ${a.no}`, ref:{deal:id}});
+    const ok = await write(async()=>{ await cdoc(k.handle).update({name:v}); await db.collection("agreements").doc(a.id).update({creatorName:v}); }, "Name saved on the agreement", {act:"agreement", summary:`Added @${k.handle}'s full name (${v}) to receipt ${a.no}`, ref:{deal:id}});
     if(ok){ if(S.creators[k.handle]) S.creators[k.handle].name=v; setTimeout(()=>openCampaign(id),300); } else e.target.disabled=false;
   });
   const btn = sel => document.querySelector(`[data-agr="${sel}"]`);
-  btn("create")?.addEventListener("click", async e=>{ e.target.disabled=true; try{ const r=await createAgreement(id, S.campaigns[id]||k); toast(`Agreement ${r.no} created`); openCampaign(id); }catch(err){ e.target.disabled=false; toast("Couldn't create the agreement. Check your connection and try again."); } });
-  btn("reissue")?.addEventListener("click", async e=>{ e.target.disabled=true; try{ await db.collection("agreements").doc(a.id).update({status:"void", voidReason:"Terms changed after signing", voidOn:iso(TODAY)}); const r=await createAgreement(id, S.campaigns[id]||k); toast(`New agreement ${r.no} created. Send it to the creator.`); openCampaign(id); }catch(err){ e.target.disabled=false; toast("Couldn't issue a new agreement. Try again."); } });
+  btn("create")?.addEventListener("click", async e=>{ e.target.disabled=true; try{ const r=await createAgreement(id, S.campaigns[id]||k); toast(`Receipt ${r.no} created`); openCampaign(id); }catch(err){ e.target.disabled=false; toast("Couldn't create the agreement. Check your connection and try again."); } });
+  btn("reissue")?.addEventListener("click", async e=>{ e.target.disabled=true; try{ await db.collection("agreements").doc(a.id).update({status:"void", voidReason:"Terms changed after signing", voidOn:iso(TODAY)}); const r=await createAgreement(id, S.campaigns[id]||k); toast(`New receipt ${r.no} created. Send it to the creator.`); openCampaign(id); }catch(err){ e.target.disabled=false; toast("Couldn't issue a new agreement. Try again."); } });
   btn("send")?.addEventListener("click", async ()=>{
     const w = window.open("about:blank", "_blank");
     if(!(await prepareSend(a))){ w && w.close(); return; }
     const c = S.creators[k.handle]||{}, first = (a.creatorName||"").split(" ")[0] || "";
-    const msg = `Hi ${first}, here's your Percent Labs agreement for ${a.brand} (No. ${a.no}). Please read it and sign here:\n${signLink(a)}\n\nمرحباً ${first}، هذه اتفاقيتك مع برسنت لابس لعلامة ${a.brand} (رقم ${a.no}). يرجى قراءتها والتوقيع عبر الرابط:\n${signLink(a)}`;
+    const amt = `${Number(a.price||0).toLocaleString("en-US")} ${a.currency||"USD"}`;
+    const msg = a.kind==="receipt"
+      ? `Hi ${first}, please confirm you've received your payment of ${amt} from Percent Labs for ${a.brand} (receipt No. ${a.no}) by signing here:\n${signLink(a)}\n\nمرحباً ${first}، يرجى تأكيد استلامك مبلغ ${amt} من برسنت لابس مقابل محتوى ${a.brand} (إيصال رقم ${a.no}) بالتوقيع عبر الرابط:\n${signLink(a)}`
+      : `Hi ${first}, here's your Percent Labs agreement for ${a.brand} (No. ${a.no}). Please read it and sign here:\n${signLink(a)}\n\nمرحباً ${first}، هذه اتفاقيتك مع برسنت لابس لعلامة ${a.brand} (رقم ${a.no}). يرجى قراءتها والتوقيع عبر الرابط:\n${signLink(a)}`;
     const url = c.phone && c.phone.num ? `https://wa.me/${(c.phone.cc+c.phone.num).replace(/\D/g,"")}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
     if(w) w.location.href = url; else location.href = url;
     toast(c.phone && c.phone.num ? "WhatsApp opened with the message ready." : "No phone saved for this creator. Pick the chat in WhatsApp.");
@@ -1784,15 +1791,15 @@ function wireAgreement(id, k){
     lab.classList.remove("busy"); if(lab.firstChild) lab.firstChild.textContent = "Upload signed copy";
   });
 }
-// "My signature": the signatory draws it once; it's stamped on every agreement when it's sent.
+// "My signature": the signatory draws it once; it's stamped on every receipt when it's sent.
 function openMySignature(target){
   const cfg = agrCfg(), me = (target && isAdmin()) ? target : S.me?.username, other = me!==S.me?.username, who = USERS[me]?.name || me;
-  drawer(`<div class="dhead"><div><h2>${other?`${esc(who)}'s signature`:"My signature"}</h2><div class="sub">${other?`You're replacing ${esc(who)}'s saved signature as admin.`:me===cfg.signatoryUser?`Added to every creator agreement you send for Percent Labs.`:`Only ${esc(cfg.signatoryName)}'s signature goes on agreements. You can still save yours.`}</div></div><button class="btn ghost x" type="button" data-close aria-label="Close">✕</button></div>
+  drawer(`<div class="dhead"><div><h2>${other?`${esc(who)}'s signature`:"My signature"}</h2><div class="sub">${other?`You're replacing ${esc(who)}'s saved signature as admin.`:me===cfg.signatoryUser?`Added to every creator receipt you send for Percent Labs.`:`Only ${esc(cfg.signatoryName)}'s signature goes on agreements. You can still save yours.`}</div></div><button class="btn ghost x" type="button" data-close aria-label="Close">✕</button></div>
     <div class="dbody"><div id="sigNow" class="hint">Loading…</div>
       <div class="sigpad"><canvas id="mySig" aria-label="Signature pad"></canvas><span>Sign here</span></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button type="button" class="btn" id="sigClr">Clear</button><label class="btn">Upload a photo instead<input type="file" accept="image/*" hidden id="sigPhoto"></label></div>
       <div id="sigPrev" hidden></div>
-      <p class="hint" style="margin:0">Draw with your finger or mouse, or sign on white paper and upload a photo of it. Agreements already sent keep the signature they were sent with.</p></div>
+      <p class="hint" style="margin:0">Draw with your finger or mouse, or sign on white paper and upload a photo of it. Receipts already sent keep the signature they were sent with.</p></div>
     <div class="dfoot"><span class="sp"></span><button class="btn ghost" type="button" data-close>Close</button><button class="btn primary" type="button" id="sigSave">Save signature</button></div>`);
   const pad = PLAgreement.signaturePad($("#mySig"));
   db.collection("signatures").doc(me).get().then(d=>{ const el=$("#sigNow"); if(!el) return; el.innerHTML = d.exists && d.data().img ? `Current signature:<br><img src="${esc(d.data().img)}" alt="Your saved signature" style="max-height:60px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:4px;margin-top:4px">` : "No signature saved yet. Draw it below."; }).catch(()=>{ const el=$("#sigNow"); if(el) el.textContent=""; });
@@ -1808,7 +1815,7 @@ function openMySignature(target){
       photo=o.toDataURL("image/png"); pad.clear(); const pv=$("#sigPrev"); pv.hidden=false; pv.innerHTML=`<span class="hint">From your photo:</span><br><img src="${photo}" alt="Signature from photo" style="max-height:70px;max-width:100%;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px">`;
     }; im.src=URL.createObjectURL(fl); };
   $("#sigSave").onclick = async () => { const img = pad.isEmpty() ? photo : pad.toPNG(); if(!img){ toast("Draw your signature or upload a photo first."); return; }
-    if(await write(()=>db.collection("signatures").doc(me).set({img, name:who, updatedOn:iso(TODAY), updatedBy:S.me.name}), "Signature saved", {act:"agreement", summary: other?`${S.me.name} replaced ${who}'s agreement signature`:`${S.me.name} updated their agreement signature`})) { closeDrawer(); if(other && S.tab==="admin") render(); } };
+    if(await write(()=>db.collection("signatures").doc(me).set({img, name:who, updatedOn:iso(TODAY), updatedBy:S.me.name}), "Signature saved", {act:"agreement", summary: other?`${S.me.name} replaced ${who}'s receipt signature`:`${S.me.name} updated their receipt signature`})) { closeDrawer(); if(other && S.tab==="admin") render(); } };
 }
 
 /* ---------- Deal day, late results, periods, budgets ---------- */
@@ -1828,7 +1835,7 @@ function lateItems(){
 function lateDays(k){ const today=iso(TODAY), di=dueInfo(k); if(!di||!di.units) return 0;
   let m=0; for(const x of di.units) if(x.s==="due" && today>x.due) m=Math.max(m,daysBetween(x.due,today));
   if(di.c==="due" && today>di.codeDue) m=Math.max(m,daysBetween(di.codeDue,today)); return m; }
-const LATE_LABEL = {reel:"Reel results", link:"Reel link", code:"Code uses", agreement:"Agreement not signed"};
+const LATE_LABEL = {reel:"Reel results", link:"Reel link", code:"Code uses", agreement:"Receipt not signed"};
 function maybeLatePopup(){
   if(!S.me || !S.loaded.k || !S.loaded.a || maybeLatePopup.done) return;
   maybeLatePopup.done = true;
@@ -1977,7 +1984,7 @@ function renderToday(){
       <h3>Needs you now</h3>
       ${now ? `<div class="t2-list">
         ${AG.map(({id,k,st})=>`<div class="t2-item">
-          <span class="t2-tag agr">Agreement</span>
+          <span class="t2-tag agr">Receipt</span>
           <div class="t2-main"><b>@${esc(k.handle)}</b><small>${bdot(k.brand)}${esc(k.brand)} · ${st.key==="notsent"?"not sent yet":st.key==="expired"?"signing link expired, send a new one":`waiting for signature · ${st.days} day${st.days!==1?"s":""}`}</small></div>
           <button type="button" class="btn ${st.key!=="due"?"primary":""} sm" data-deal="${esc(id)}">${st.key==="notsent"?"Send it":st.key==="expired"?"Resend":"Open deal"}</button></div>`).join("")}
         ${D.due.map(({id,k,di})=>`<div class="t2-item">
@@ -2126,16 +2133,16 @@ function rulesHTML(){
     </div>
   </section>
   <section class="adm-card">
-    <h3 class="pb-h">Agreements</h3>
+    <h3 class="pb-h">Receipts</h3>
     ${(()=>{ const c=agrCfg(); return `<div class="rules-card">
-      <label class="field"><span>Signs for Percent Labs</span><select id="agU" class="in">${(()=>{ const L=signers(); if(!L.some(([u])=>u===c.signatoryUser)) L.unshift([c.signatoryUser,{name:(USERS[c.signatoryUser]?.name||c.signatoryUser)+" (role can't sign)"}]); return L.map(([u,x])=>`<option value="${esc(u)}" ${c.signatoryUser===u?"selected":""}>${esc(x.name)}</option>`).join(""); })()}</select><span class="hint">Only people whose role has "Sign agreements for Percent Labs" (Users &amp; access → Roles) are listed.</span></label>
-      <label class="field"><span>Name printed on agreements</span><input id="agN" class="in" type="text" value="${esc(c.signatoryName)}"></label>
-      <div class="field"><span>Signature on file</span><span id="agSig" class="hint">checking…</span><button type="button" class="btn sm" id="agSigEdit" style="justify-self:start">Replace signature</button></div>
+      <div hidden><label class="field"><span>Signs for Percent Labs</span><select id="agU" class="in">${(()=>{ const L=signers(); if(!L.some(([u])=>u===c.signatoryUser)) L.unshift([c.signatoryUser,{name:(USERS[c.signatoryUser]?.name||c.signatoryUser)+" (role can't sign)"}]); return L.map(([u,x])=>`<option value="${esc(u)}" ${c.signatoryUser===u?"selected":""}>${esc(x.name)}</option>`).join(""); })()}</select><span class="hint">Only people whose role has "Sign receipts for Percent Labs" (Users &amp; access → Roles) are listed.</span></label>
+      <label class="field"><span>Name printed on receipts</span><input id="agN" class="in" type="text" value="${esc(c.signatoryName)}"></label>
+      <div class="field"><span>Signature on file</span><span id="agSig" class="hint">checking…</span><button type="button" class="btn sm" id="agSigEdit" style="justify-self:start">Replace signature</button></div></div>
       <div class="rc-sub">Google Drive</div>
       <label class="field"><span>Connector link (Apps Script web app URL)</span><input id="agD" class="in" type="url" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(c.driveUrl)}"></label>
       <label class="field"><span>Connector key</span><input id="agK" class="in" type="text" value="${esc(c.driveToken)}" autocomplete="off" spellcheck="false"></label>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sm" id="agTest">Test connection</button><span class="hint" id="agTestOut">${c.driveUrl?"":"Not connected: signed agreements can't be filed yet."}</span></div>
-      <p class="hint" style="margin:0">Paid deals booked from ${esc(fmtD(AGR_START))} get a numbered agreement (PL-CR-year-0001…). Signed copies are filed in Drive under Creator Agreements / year / brand.</p>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sm" id="agTest">Test connection</button><span class="hint" id="agTestOut">${c.driveUrl?"":"Not connected: signed receipts can't be filed yet."}</span></div>
+      <p class="hint" style="margin:0">Paid deals booked from ${esc(fmtD(AGR_START))} get a numbered payment receipt (PL-CR-year-0001…). The creator signs it when they're paid, confirming they received the full amount. Signed copies are filed in Drive under Creator Agreements / year / brand.</p>
     </div>`; })()}
   </section>
   <section class="adm-card">
@@ -2152,9 +2159,9 @@ function rulesHTML(){
 }
 function wireRules(rerender){
   const saveAgr = (patch, ok, summary) => { const next={...agrCfg(), ...patch}; S.settings.agreements=next; return saveSettings({agreements:next}, ok, summary); };
-  $("#agU")?.addEventListener("change", e=>{ const u=e.target.value; saveAgr({signatoryUser:u, signatoryName:USERS[u]?.name||u}, `${USERS[u]?.name||u} now signs agreements`, `Agreement signatory → ${USERS[u]?.name||u}`).then(()=>rerender()); });
+  $("#agU")?.addEventListener("change", e=>{ const u=e.target.value; saveAgr({signatoryUser:u, signatoryName:USERS[u]?.name||u}, `${USERS[u]?.name||u} now signs receipts`, `Receipt signatory → ${USERS[u]?.name||u}`).then(()=>rerender()); });
   $("#agSigEdit")?.addEventListener("click", ()=>openMySignature(agrCfg().signatoryUser));
-  $("#agN")?.addEventListener("change", e=>{ const v=e.target.value.trim(); if(v) saveAgr({signatoryName:v}, "Name saved", `Agreement signatory name → ${v}`); });
+  $("#agN")?.addEventListener("change", e=>{ const v=e.target.value.trim(); if(v) saveAgr({signatoryName:v}, "Name saved", `Receipt signatory name → ${v}`); });
   $("#agD")?.addEventListener("change", e=>saveAgr({driveUrl:e.target.value.trim()}, "Drive connector saved", "Updated the Google Drive connector link"));
   $("#agK")?.addEventListener("change", e=>saveAgr({driveToken:e.target.value.trim()}, "Drive key saved", "Updated the Google Drive connector key"));
   if($("#agSig")) db.collection("signatures").doc(agrCfg().signatoryUser).get().then(d=>{ const el=$("#agSig"); if(el) el.innerHTML = d.exists && d.data().img ? `<img src="${esc(d.data().img)}" alt="Saved signature" style="max-height:30px;background:#fff;border-radius:4px">` : `<b style="color:var(--bad)">Missing</b>: ${esc(agrCfg().signatoryName)} adds it from the avatar menu → My signature`; }).catch(()=>{});
@@ -2213,14 +2220,14 @@ function onTimeReason(k){
   const x=late[0]; return `${x.type.toLowerCase()} moved from ${fmtDs(x.planned)} to ${fmtDs(x.date)}${late.length>1?` (+${late.length-1} more)`:""}`;
 }
 function scoringHTML(){
-  const bar=[["Cheap views",25,"var(--fg)"],["Cheap shares",20,"color-mix(in srgb,var(--fg) 75%,var(--bg))"],["Shares per view",20,"color-mix(in srgb,var(--fg) 55%,var(--bg))"],["Cheap saves",15,"color-mix(in srgb,var(--fg) 35%,var(--bg))"],["Code uses",15,"var(--ember)"],["On time",5,"var(--warn)"]];
-  const ubar=[["Views ÷ followers",20,"var(--fg)"],["Shares per view",30,"color-mix(in srgb,var(--fg) 65%,var(--bg))"],["Saves per view",30,"color-mix(in srgb,var(--fg) 40%,var(--bg))"],["Code uses",15,"var(--ember)"],["On time",5,"var(--warn)"]];
+  const bar=[["Cheap views",25,"var(--fg)"],["Cheap shares",20,"color-mix(in srgb,var(--fg) 75%,var(--bg))"],["Shares per view",20,"color-mix(in srgb,var(--fg) 55%,var(--bg))"],["Cheap saves",15,"color-mix(in srgb,var(--fg) 35%,var(--bg))"],["Code uses",10,"var(--ember)"],["On time",5,"var(--warn)"],["Quick reaction",5,"var(--good)"]];
+  const ubar=[["Views ÷ followers",20,"var(--fg)"],["Shares per view",30,"color-mix(in srgb,var(--fg) 65%,var(--bg))"],["Saves per view",30,"color-mix(in srgb,var(--fg) 40%,var(--bg))"],["Code uses",10,"var(--ember)"],["On time",5,"var(--warn)"],["Quick reaction",5,"var(--good)"]];
   const wbar = b => `<div class="wbar">${b.map(([l,w,c])=>`<span style="flex:${w};background:${c}" title="${l} ${w}%"></span>`).join("")}</div><div class="wleg">${b.map(([l,w,c])=>`<span><i style="background:${c}"></i>${l} <b>${w}%</b></span>`).join("")}</div>`;
   return `<section id="pb-scoring" class="pb-scoring">
     <h3 class="pb-h">How scoring works</h3>
     <div class="sc-flow">
       <div><b>Each reel</b><span>gets a score 0–100</span></div><em>→</em>
-      <div><b>Each deal</b><span>= its reels + code + on time</span></div><em>→</em>
+      <div><b>Each deal</b><span>= its reels + code + team ratings</span></div><em>→</em>
       <div><b>Each creator</b><span>= average of their deals</span></div>
     </div>
     <div class="sc-leagues">
@@ -2244,8 +2251,9 @@ function renderPlaybook(){
     {t:"Reach out", d:"Message them on WhatsApp or Instagram.", where:"WhatsApp / Instagram", list:["Ask for their price in USD for each package","Ask for a phone number","Already in the Hub? Mark them <b>Contacted, waiting</b>. After 5 days they show up on <b>Today</b>: swipe right if interested, left if not, or tap <b>Nudged again</b>"]},
     {t:"Onboard", d:"Got their info? Add them to the Hub.", where:"+ Add creator", list:["Just 3 things: username (or paste their profile link), Instagram followers as the <b>full number</b> (45200, not 45.2k), and category","Add phone, other platforms, quoted prices (USD) or notes only if you have them","After saving, tap the brand you reached out for to mark them <b>Contacted</b>"]},
     {t:"Book", d:"Agreed? Lock the deal so nobody changes it by mistake.", where:"Profile → + Book deal", list:["Pick one of their prices, or type the agreed one. Leave <b>Save to their prices</b> ticked so their prices stay current","Choose brand and platform. Check the brand's monthly budget shown under the price","Add a promo code if you can. Each code can only be used once","Add planned dates for every reel and story"]},
+    {t:"Pay & get a receipt", d:"Every paid deal gets a numbered payment receipt the creator signs when they're paid.", where:"Deal → Receipt", list:["The receipt (PL-CR-2026-0001…) is made automatically when you book a paid deal","Make sure the creator's <b>full name</b> is on their profile, not just the @handle. It goes on the receipt and can't be changed by the creator","When you pay them, tap <b>Send on WhatsApp</b> (or <b>Copy signing link</b>)","They check the details and sign with their finger to confirm they got the full amount","The link works for <b>72 hours</b>. Expired? Send a new link: same receipt, same number","Signed copies are saved to Google Drive by themselves. Signed on paper? Use <b>Upload signed copy</b>","Changed the fee or content after it was signed? Tap <b>Issue a new receipt</b>"]},
     {t:"Post", d:"Make sure everything goes live as agreed.", where:"Deals tab", list:["<b>Today</b> lists what goes live this week","Add each reel's <b>link</b> on <b>day 7</b>, together with its results. Stories expire, so they don't need one","A date moved? Update it in the deal"]},
-    {t:"Results", d:"The Deals tab turns red when it's time.", where:"Deals → Results due", list:["Each reel: views, shares, saves on <b>day 7</b>","Story views if the creator shares them","Check <b>Posted on time</b> (it's pre-filled)","Code uses on <b>day 14</b>"]},
+    {t:"Results", d:"The Deals tab turns red when it's time.", where:"Deals → Results due", list:["Each reel: views, shares, saves on <b>day 7</b>","Story views if the creator shares them","Check <b>Posted on time</b> (it's pre-filled)","Set <b>Quick audience reaction</b>: Yes if the post brought a quick spike in Instagram DMs, new followers in a short time, etc.","Code uses on <b>day 14</b>"]},
     {t:"Learn", d:"Let the scores decide who to book again.", where:"Leaderboard", list:["<b>65+</b> rebook","<b>40–64</b> renegotiate","<b>Under 40</b> drop"]},
   ];
   const rules = [
@@ -2254,10 +2262,11 @@ function renderPlaybook(){
     {n:"Day 7", t:"after each reel: its link, views, shares and saves. Not before; late ones pop up every morning"},
     {n:"14 days", t:"after the last reel, count promo code uses"},
     {n:"48 hours", t:"to grab story views, if the creator shares them"},
+    {n:"72 hours", t:"for the creator to sign a receipt link. After that, send them a new one"},
     {n:"USD only", t:"every price and deal is in dollars. Anything else goes in notes"},
   ];
-  const dont = ["Don't book anyone marked Resting or Do not book","Don't change deal terms after booking. Use Edit terms only if you renegotiated","Don't enter results before the collection day. Early numbers are too low","Don't add a deal for someone who isn't onboarded","Don't average a creator's Paid and UGC scores. They're ranked separately on purpose"];
-  const ask = [["Before booking","Their price in USD for each package, and a phone number"],["On day 7","A screenshot of each reel's insights: views, shares, saves"],["Within 48 hours","Story views, only if they're happy to share"]];
+  const dont = ["Don't book anyone marked Resting or Do not book","Don't change deal terms after booking. Use Edit terms only if you renegotiated","Don't enter results before the collection day. Early numbers are too low","Don't add a deal for someone who isn't onboarded","Don't send a receipt before the creator has actually been paid","Don't average a creator's Paid and UGC scores. They're ranked separately on purpose"];
+  const ask = [["Before booking","Their price in USD for each package, and a phone number"],["On day 7","A screenshot of each reel's insights: views, shares, saves"],["Within 48 hours","Story views, only if they're happy to share"],["When you pay them","Their signature on the receipt link, within 72 hours"]];
   $("#main").innerHTML = `
   <div class="pb">
     <section class="pb-hero">
@@ -2306,10 +2315,10 @@ function renderGuide(){
   <div class="guide">
     <div class="section">
       <h2>How creators are scored</h2>
-      <p class="lede">Every reel gets its own score. A deal's score combines its reels' average with code uses and posting on time. A creator's score is the average of all their deals. The score is relative: 100 means the best result among all our deals so far, 0 the worst. It moves a little as new deals come in.</p>
+      <p class="lede">Every reel gets its own score. A deal's score combines its reels' average with code uses, posting on time and the team's quick-reaction rating. A creator's score is the average of all their deals. The score is relative: 100 means the best result among all our deals so far, 0 the worst. It moves a little as new deals come in.</p>
     </div>
     <div class="section">
-      <h3 class="gh">1 · What's measured</h3><p class="lede">The first four are measured on every reel, using the reel's share of the deal price. Together they make up 80% of the deal score. The last two are measured once per deal.</p>
+      <h3 class="gh">1 · What's measured</h3><p class="lede">The first four are measured on every reel, using the reel's share of the deal price. Together they make up 80% of the deal score. The last three are measured once per deal: code uses, and two Yes/No calls the team makes on the deal.</p>
       <div class="tablewrap"><table style="min-width:600px"><thead><tr><th>Metric</th><th>How it's calculated</th><th>Better when</th><th class="r">Weight</th></tr></thead><tbody>
         ${METRICS.map(M=>`<tr style="cursor:default"><td><b>${esc(M.label)}</b></td><td style="white-space:normal">${esc(M.how)}</td><td>${M.fixed?"Yes":M.lower?"Lower":"Higher"}</td><td class="r num">${Math.round(M.w*100)}%</td></tr>`).join("")}
       </tbody></table></div>
@@ -2322,7 +2331,7 @@ function renderGuide(){
     </div>
     <div class="section">
       <h3 class="gh">3 · Missing metrics don't count against anyone</h3>
-      <p class="lede">If a metric isn't logged for a deal, it's left out and the other weights are scaled up to fill 100%. This is how deals without a promo code are scored fairly: cost per code use only applies when the deal had a code. A no-code deal is scored on the other 85%, scaled to 100.</p>
+      <p class="lede">If a metric isn't logged for a deal, it's left out and the other weights are scaled up to fill 100%. This is how deals without a promo code are scored fairly: cost per code use only applies when the deal had a code. A no-code deal is scored on the other parts, scaled to 100. The same goes for the two team ratings when they're left on "Not set".</p>
     </div>
     <div class="section">
       <h3 class="gh">4 · Labels</h3>
@@ -2794,6 +2803,7 @@ function openCampaign(id, handle, unlockTerms, preBrand){
         <p class="hint" style="margin:4px 0 0">Results and the reel link can only be entered from day ${REELS_DAYS} after the reel went up. Measured-on fills in with today's date when you change a reel's numbers.</p>
         ${k.deliverables.some(d=>d.type==="Story")?`<label class="field" style="max-width:260px"><span>Story views, total (optional, if shared)</span><input id="k_stv" type="text" inputmode="decimal" value="${esc(k.storyViews??"")}" placeholder="Leave empty if not shared"></label>`:""}
         ${(()=>{ const sg=onTimeSuggest(k), cur = k.onTime!=null ? k.onTime : sg; return `<label class="field" style="max-width:260px"><span>Posted on time?</span><select id="k_ot"><option value="" ${cur==null?"selected":""}>Not set</option><option value="1" ${cur===true?"selected":""}>Yes</option><option value="0" ${cur===false?"selected":""}>No, late</option></select>${sg!=null?`<span class="hint">${k.onTime==null?"Pre-filled from the dates":"Dates suggest"}: ${esc(onTimeReason(k))}. Change it if the delay was on our side.</span>`:""}</label>`; })()}
+        <label class="field" style="max-width:260px"><span>Quick audience reaction?</span><select id="k_rx"><option value="" ${k.reaction==null?"selected":""}>Not set</option><option value="1" ${k.reaction===true?"selected":""}>Yes</option><option value="0" ${k.reaction===false?"selected":""}>No</option></select><span class="hint">Your call after the post: a quick spike in Instagram DMs, new followers in a short time, etc. Counts for 5% of the score.</span></label>
         ${k.hasCode && lastReel(k) && iso(TODAY) < iso(addDays(lastReel(k), CODE_DAYS)) ? `<p class="lockrow" style="margin-top:10px">🔒 Code uses open ${esc(fmtD(iso(addDays(lastReel(k), CODE_DAYS))))}, ${CODE_DAYS} days after the last reel.</p>` : ""}
         ${k.hasCode && !(lastReel(k) && iso(TODAY) < iso(addDays(lastReel(k), CODE_DAYS)))?`<div class="grid3" style="margin-top:10px">
           <label class="field"><span>Code uses (orders)</span><input id="k_o" type="number" min="0" value="${esc(k.orders??"")}"></label>
@@ -2939,6 +2949,7 @@ function openCampaign(id, handle, unlockTerms, preBrand){
         }
       }catch(msg){ toast(String(msg)); return; }
       doc.onTime = $("#k_ot").value===""?null:$("#k_ot").value==="1";
+      if($("#k_rx")) doc.reaction = $("#k_rx").value===""?null:$("#k_rx").value==="1";
       if($("#k_stv")){ const sv=parseNum($("#k_stv").value); if(Number.isNaN(sv)){ toast("Story views must be a number like 12000 or 12k."); return; } doc.storyViews = sv; }
       if($("#k_o")){
         const orders=numv("#k_o"); let cm=$("#k_cm").value;
@@ -2953,7 +2964,7 @@ function openCampaign(id, handle, unlockTerms, preBrand){
     const cid = id || ("c"+Date.now().toString(36));
     const ok = await write(()=>db.collection("campaigns").doc(cid).set(doc), isNew?"Deal booked":"Saved", dealLog(isNew, k, doc, cid));
     if(!ok) return;
-    if(isNew && doc.price>0 && can("agrSend")){ try{ const r = await createAgreement(cid, doc); toast(`Deal booked · agreement ${r.no} ready to send`); }catch(e){ toast("Deal booked, but the agreement couldn't be created. Open the deal and click Create agreement."); } }
+    if(isNew && doc.price>0 && can("agrSend")){ try{ const r = await createAgreement(cid, doc); toast(`Deal booked · receipt ${r.no} ready to send`); }catch(e){ toast("Deal booked, but the receipt couldn't be created. Open the deal and click Create agreement."); } }
     else if(!isNew) await syncAgreement(cid, doc);
     if($("#k_rc") && !$("#rcBox").hidden && $("#k_rc").checked && doc.price!=null){
       const c=S.creators[h], p=comboOf(doc); const ps=packagesOf(c).filter(x=>!(x.reels===p.reels && x.stories===p.stories));
@@ -2971,8 +2982,8 @@ function dealLog(isNew, k, doc, cid){
   const T = [["bookedOn","deal day",v=>v?fmtD(v):"not recorded"],["price","price",v=>priceTxt(v)],["brand","brand",v=>v],["platform","platform",v=>v||"Instagram"],["promoCode","promo code",v=>v||"none"]];
   const tc = T.filter(([f,,fm])=>fm(k[f]??null)!==fm(doc[f]??null)).map(([f,l,fm])=>`${l} ${fm(k[f])} → ${fm(doc[f])}`);
   if(tc.length) return {act:"terms", summary:`${who}: ${tc.join(", ")}`, ref:{deal:cid}};
-  const R = ["views","shares","saves","orders","onTime","storyViews"];
-  if(R.some(f=>(k[f]??null)!==(doc[f]??null))) return {act:"results", summary:`${who}: ${fmtN(doc.views)} views · ${fmtN(doc.shares)} shares · ${fmtN(doc.saves)} saves${doc.hasCode&&doc.orders!=null?` · ${doc.orders} code uses`:""}${doc.onTime===false?" · posted late":""}`, ref:{deal:cid}};
+  const R = ["views","shares","saves","orders","onTime","reaction","storyViews"];
+  if(R.some(f=>(k[f]??null)!==(doc[f]??null))) return {act:"results", summary:`${who}: ${fmtN(doc.views)} views · ${fmtN(doc.shares)} shares · ${fmtN(doc.saves)} saves${doc.hasCode&&doc.orders!=null?` · ${doc.orders} code uses`:""}${doc.onTime===false?" · posted late":""}${doc.reaction===true?" · quick audience reaction":doc.reaction===false?" · no quick reaction":""}`, ref:{deal:cid}};
   const a = delivs(k).map(d=>d.type+d.date).join(), b = delivs(doc).map(d=>d.type+d.date).join();
   if(a!==b) return {act:"dates", summary:`${who}: posts now ${dealRange(doc)}`, ref:{deal:cid}};
   return null;
@@ -2996,7 +3007,7 @@ const BUILTIN_USERS = Object.keys(USERS);
 const PERMS = [
   {g:"Tabs they can open", items:[["tab_today","Today"],["tab_find","Find creators"],["tab_board","Leaderboard"],["tab_deals","Deals"]]},
   {g:"Creators", items:[["onboard","Onboard new creators"],["editCreator","Edit creator details & prices"],["outreach","Outreach status & follow-ups"],["followers","Update follower counts"],["dnb","Flag Do not book"],["delCreator","Delete creators"]]},
-  {g:"Deals", items:[["book","Book deals"],["results","Log post dates, links & results"],["terms","Change agreed deal terms"],["cancel","Cancel or restore deals"],["delDeal","Delete deals"],["agrSend","Create & send agreements"],["agrSign","Sign agreements for Percent Labs"],["agrUpload","Upload signed agreements"]]},
+  {g:"Deals", items:[["book","Book deals"],["results","Log post dates, links & results"],["terms","Change agreed deal terms"],["cancel","Cancel or restore deals"],["delDeal","Delete deals"],["agrSend","Create & send agreements"],["agrUpload","Upload signed agreements"]]},
 ];
 const PERM_KEYS = PERMS.flatMap(g=>g.items.map(i=>i[0]));
 const allPerms = v => Object.fromEntries(PERM_KEYS.map(k=>[k, v]));
@@ -3030,7 +3041,7 @@ function gatePerms(){
   for(const [sel,p,how] of SEL_PERM) if(!can(p)) document.querySelectorAll(sel).forEach(el=>{ if(how==="hide") el.hidden=true; else el.disabled=true; });
   const dr = document.querySelector(".drawer");
   if(dr && dr.dataset.kind==="deal" && !dr.dataset.isnew){
-    if(!can("results")) dr.querySelectorAll(".dl input, .dl select, .dl-x, #addReel, #addStory, .rres input, #k_ot, #k_stv, #k_o, #k_rev, #k_cm").forEach(el=>{ el.disabled=true; });
+    if(!can("results")) dr.querySelectorAll(".dl input, .dl select, .dl-x, #addReel, #addStory, .rres input, #k_ot, #k_rx, #k_stv, #k_o, #k_rev, #k_cm").forEach(el=>{ el.disabled=true; });
     if(!can("results") && !can("terms")){ const sb=dr.querySelector("#saveBtn"); if(sb) sb.hidden=true; if(!dr.querySelector(".ro-note")) dr.querySelector(".dbody")?.insertAdjacentHTML("afterbegin", `<div class="ro-note">View only. Your role can't change deals.</div>`); }
   }
 }
@@ -3062,7 +3073,7 @@ function applyRole(){
   const adminTab = $('#tabs [data-tab="admin"]');
   if(adminTab) adminTab.hidden = !isAdmin();
   if(!isAdmin() && S.tab==="admin") S.tab="today";
-  const ms=$("#btnMySig"); if(ms) ms.hidden = !S.me || !can("agrSign");
+  const ms=$("#btnMySig"); if(ms) ms.hidden = true;   // receipts are signed by the creator only
   ["btnAddCreator","btnAddCampaign"].forEach(id=>{ const el=document.getElementById(id); if(el) el.hidden = !!S.me && !can(ID_PERM[id]); });
   const who=$("#whoami"); if(who) who.innerHTML = S.me ? `<i style="background:${userColor(S.me.username)}">${esc(S.me.name[0])}</i><span class="wn">${esc(S.me.name)}</span>` : "";
   const mw=$("#menuWho"); if(mw) mw.innerHTML = S.me ? `<b>${esc(S.me.name)}</b><small>@${esc(S.me.username)} · ${esc(ROLE_LABEL[S.me.role])}</small>` : "";
@@ -3127,7 +3138,7 @@ const ACTS = {
   terms:{l:"Changed deal terms", i:"✎", tone:"warn"}, cancel:{l:"Cancelled deal", i:"⨯", tone:"bad"}, restore:{l:"Restored deal", i:"↺", tone:""},
   delete_deal:{l:"Deleted deal", i:"🗑", tone:"bad"}, onboard:{l:"Onboarded creator", i:"＋", tone:"good"}, edit_creator:{l:"Edited creator", i:"✎", tone:""},
   delete_creator:{l:"Deleted creator", i:"🗑", tone:"bad"}, status:{l:"Outreach update", i:"✉", tone:""}, followers:{l:"Follower update", i:"↑", tone:""},
-  settings:{l:"Changed rules, budget or brands", i:"⚙", tone:"warn"}, user:{l:"Changed users or access", i:"👤", tone:"warn"}, agreement:{l:"Agreement", i:"✍", tone:""}, dnb:{l:"Flagged do not book", i:"⛔", tone:"bad"}, undnb:{l:"Removed do-not-book flag", i:"↺", tone:""}, login:{l:"Signed in", i:"→", tone:"muted"}, logout:{l:"Signed out", i:"←", tone:"muted"},
+  settings:{l:"Changed rules, budget or brands", i:"⚙", tone:"warn"}, user:{l:"Changed users or access", i:"👤", tone:"warn"}, agreement:{l:"Receipt", i:"✍", tone:""}, dnb:{l:"Flagged do not book", i:"⛔", tone:"bad"}, undnb:{l:"Removed do-not-book flag", i:"↺", tone:""}, login:{l:"Signed in", i:"→", tone:"muted"}, logout:{l:"Signed out", i:"←", tone:"muted"},
 };
 S.ad = S.ad || {period:7, from:"", to:"", user:"", act:"", important:false};
 S.adTab = S.adTab || "attention";
@@ -3180,7 +3191,7 @@ function attentionHTML(){
   if(!all) return `<div class="t2-clear big"><span>✓</span><div><b>Nothing needs you right now.</b><small>Late results, budget alerts and important changes by the team show up here.</small></div></div>`;
   const byDeal = {}; A.late.forEach(x=>{ (byDeal[x.id] ||= []).push(x); });
   return `<div class="att-grid">
-    ${A.drive.length ? card("bad", "Signed agreements not in Google Drive", A.drive.length, `<p class="att-sub">Signed online but the PDF isn't in Drive yet. The signature itself is safe in the hub.</p><div class="att-list">${A.drive.map(a=>`<div class="att-row"><div><b>@${esc(a.handle)}</b> <small>${esc(a.brand)} · ${esc(a.no)}</small><div class="att-what">Signed ${tsMs(a.signedAt)?esc(relTime(new Date(tsMs(a.signedAt)).toISOString())):""} · ${esc(driveReason(a))}${a.driveErrorAt?` <span class="hint">(last try ${esc(relTime(new Date(a.driveErrorAt).toISOString()))}${a.driveErrorBy?` by ${esc(a.driveErrorBy)}`:""})</span>`:""}</div></div><div class="att-acts"><button type="button" class="btn sm primary" data-att-drive="${esc(a.id)}">Try again</button><button type="button" class="btn sm" data-ev-deal="${esc(a.dealId)}">Open deal</button></div></div>`).join("")}</div>`) : ""}
+    ${A.drive.length ? card("bad", "Signed receipts not in Google Drive", A.drive.length, `<p class="att-sub">Signed online but the PDF isn't in Drive yet. The signature itself is safe in the hub.</p><div class="att-list">${A.drive.map(a=>`<div class="att-row"><div><b>@${esc(a.handle)}</b> <small>${esc(a.brand)} · ${esc(a.no)}</small><div class="att-what">Signed ${tsMs(a.signedAt)?esc(relTime(new Date(tsMs(a.signedAt)).toISOString())):""} · ${esc(driveReason(a))}${a.driveErrorAt?` <span class="hint">(last try ${esc(relTime(new Date(a.driveErrorAt).toISOString()))}${a.driveErrorBy?` by ${esc(a.driveErrorBy)}`:""})</span>`:""}</div></div><div class="att-acts"><button type="button" class="btn sm primary" data-att-drive="${esc(a.id)}">Try again</button><button type="button" class="btn sm" data-ev-deal="${esc(a.dealId)}">Open deal</button></div></div>`).join("")}</div>`) : ""}
     ${A.late.length ? card("bad", "Late submissions", A.late.length, `<p class="att-sub">Results, links or code uses past their collection day.</p><div class="att-list">${Object.entries(byDeal).map(([id,xs])=>`<div class="att-row"><div><b>@${esc(xs[0].k.handle)}</b> <small>${esc(xs[0].k.brand)}</small><div class="att-what">${xs.map(x=>`${esc(LATE_LABEL[x.kind])}${x.date?` (reel ${esc(fmtDs(x.date))})`:""} · <em>${x.late}d late</em>`).join("<br>")}</div></div><button type="button" class="btn sm" data-ev-deal="${esc(id)}">Open</button></div>`).join("")}</div>`) : ""}
     ${A.budgets.length ? card("warn", `Budgets · ${esc(monthName(A.ym))}`, A.budgets.length, `<div class="att-list">${A.budgets.map(x=>`<div class="att-row"><div><i class="dot" style="background:${x.b.c}"></i> <b>${esc(x.b.name)}</b><div class="att-what">${fmt$(x.spent,0)} of ${fmt$(x.budget,0)} · ${x.spent>x.budget?`<em>${fmt$(x.spent-x.budget,0)} over</em>`:`${Math.round(x.spent/x.budget*100)}% used`}</div></div></div>`).join("")}</div><button type="button" class="linkbtn" data-adtab-go="report">See the budget report</button>`) : ""}
     ${A.review.length ? card("warn", "Changes to review", A.review.length, `<p class="att-sub">Changed terms, cancellations, deletions and flags by the team in the last 14 days.</p><div class="feed">${A.review.map(evHTML).join("")}</div>`) : ""}

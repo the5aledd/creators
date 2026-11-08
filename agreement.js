@@ -34,7 +34,81 @@
   }
   /* a: {no, brand, creatorName, handle, platform, deliverables, price, currency, dealDate,
          signatoryName, plSig, plSignedAt, creatorSig, creatorSignedName, signedAt, status} */
+  /* Payment receipt (deals from Nov 2026 on, kind:"receipt"): the creator confirms they received the full fee
+     for the listed content. Short, no terms, creator signature only. */
+  function renderReceipt(a, opts){
+    opts = opts || {};
+    const logo = opts.logo || "agreement-logo.png";
+    const price = `${Number(a.price||0).toLocaleString("en-US")} ${a.currency||"USD"}`;
+    const signedDate = v => v ? longDate(typeof v==="string" ? v : (v.toDate ? v.toDate().toISOString() : new Date(v).toISOString())) : "";
+    const sd = signedDate(a.signedAt);
+    const handle = a.handle ? "@"+String(a.handle).replace(/^@/,"") : "";
+    const name = a.creatorName || handle;
+    const plat = a.platform || "Instagram";
+    const rows = [
+      ['Brand','العلامة التجارية', a.brand, 600], ['Creator name','اسم صانع المحتوى', name, 600],
+      ['Account handle','الحساب', handle, 400], ['Platform','المنصة', plat, 400],
+      ['Content','المحتوى', a.deliverables, 400], ['Amount received','المبلغ المستلم', price, 700], ['Deal date','تاريخ الاتفاق', longDate(a.dealDate), 400],
+    ];
+    const FS = 14;   // same text size for the English and Arabic statements
+    const B = (t, ar) => `<strong${ar?` dir="ltr" style="font-family:'Space Grotesk',sans-serif;font-size:${FS}px;unicode-bidi:isolate"`:""}>${esc(t)}</strong>`;
+    const BA = t => /[\u0600-\u06FF]/.test(String(t||"")) ? B(t) : B(t,1);   // Latin words inside the Arabic text keep their own direction
+    const LT = t => `<span dir="ltr" style="font-family:'Space Grotesk',sans-serif;font-size:${FS}px;unicode-bidi:isolate">${esc(t)}</span>`;
+    const whenEn = sd ? `on <strong>${esc(sd)}</strong>` : `on the date of signing below`;
+    const whenAr = sd ? `بتاريخ ${B(sd,1)}` : `بتاريخ التوقيع أدناه`;
+    const void_ = a.status==="void";
+    return `<section class="agr-page" style="position:relative;width:794px;height:1123px;box-sizing:border-box;padding:22px 48px 16px;display:flex;flex-direction:column;gap:22px;background:#FFFFFF;color:#0C0D0C;font-family:'Space Grotesk',system-ui,sans-serif;overflow:hidden">
+    ${void_?`<div style="position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:5"><div style="transform:rotate(-24deg);border:6px solid rgba(165,40,30,.55);color:rgba(165,40,30,.55);font-size:84px;font-weight:700;letter-spacing:.12em;padding:4px 30px;border-radius:14px">VOID</div></div>`:""}
+    <header style="display:flex;flex-direction:column;align-items:center;gap:10px">
+      <div style="align-self:stretch;height:5px;background:#FF301B;border-radius:3px"></div>
+      <img src="${esc(logo)}" alt="percentlabs" style="height:52px;width:auto;display:block">
+      <div style="align-self:stretch;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:baseline;padding-top:6px">
+        <h1 style="margin:0;font-size:24px;line-height:1.2;font-weight:700;letter-spacing:-0.02em">Payment Receipt</h1>
+        <div dir="rtl" style="font-family:'Zain',sans-serif;font-size:27px;line-height:1.2;font-weight:800">إيصال استلام مبلغ</div>
+      </div>
+      <div style="align-self:stretch;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7A0D08">
+        <span>Receipt No. ${esc(a.no||"")}</span><span dir="rtl" style="font-family:'Zain',sans-serif;font-size:13px;letter-spacing:0;text-transform:none">رقم الإيصال <span dir="ltr" style="font-family:'Space Grotesk',sans-serif;font-size:10px;letter-spacing:.12em;unicode-bidi:isolate">${esc(a.no||"")}</span></span>
+      </div>
+    </header>
+    <section style="display:grid;grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr);gap:24px;padding:16px 0;border-top:1px solid #0C0D0C;border-bottom:1px solid #0C0D0C">
+      <p style="margin:0;font-size:${FS}px;line-height:1.7">I, ${B(name)}${a.creatorName&&handle?` (${esc(handle)})`:""}, confirm that ${whenEn} I received the full amount of ${B(price)} from <strong>Percent Labs LLC</strong> (Damascus Commercial Register No. 0111024182), in return for creating and publishing the following content for ${B(a.brand)} on ${esc(plat)}: ${B(a.deliverables)}.</p>
+      <div style="background:rgba(12,13,12,0.18)"></div>
+      <p dir="rtl" style="margin:0;font-family:'Zain',sans-serif;font-size:${FS}px;line-height:1.7">أُقرّ أنا ${BA(name)}${a.creatorName&&handle?` (${B(handle,1)})`:""} بأنني استلمت ${whenAr} كامل المبلغ وقدره ${B(price,1)} من <strong>برسنت لابس محدودة المسؤولية</strong> (السجل التجاري بدمشق رقم ${LT("0111024182")})، وذلك مقابل إنتاج ونشر المحتوى التالي لصالح العلامة التجارية ${BA(a.brand)} على منصة ${LT(plat)}: ${BA(a.deliverables)}.</p>
+    </section>
+    <section style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:baseline">
+        <h2 style="margin:0;font-size:10.5px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase">Details</h2>
+        <h2 dir="rtl" style="margin:0;font-family:'Zain',sans-serif;font-size:14px;line-height:1.2;font-weight:700">التفاصيل</h2>
+      </div>
+      <div style="background:#F3EEE3;border-radius:8px;padding:4px 16px">
+        ${rows.map((r,i)=>`<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr);gap:12px;align-items:center;padding:6px 0;border-bottom:${i===rows.length-1?"none":"1px solid rgba(12,13,12,0.12)"}">
+          <div style="font-size:9.5px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#7A0D08">${r[0]}</div>
+          <div style="font-size:11.5px;font-weight:${r[3]};text-align:center">${esc(r[2])}</div>
+          <div dir="rtl" style="font-family:'Zain',sans-serif;font-size:13px;line-height:1.3;font-weight:700;color:#7A0D08">${r[1]}</div></div>`).join("")}
+      </div>
+    </section>
+    <section style="display:flex;flex-direction:column;gap:6px;margin-top:10px;align-items:center">
+      <div style="width:56%;border:1px solid #0C0D0C;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:7px">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:baseline">
+          <div style="font-size:9.5px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase">Received by the creator</div>
+          <div dir="rtl" style="font-family:'Zain',sans-serif;font-size:13px;font-weight:700">توقيع المستلِم</div></div>
+        <div style="position:relative;height:70px;border:1.5px ${a.creatorSig?"solid rgba(12,13,12,.25)":"dashed #FF301B"};border-radius:6px;background:${a.creatorSig?"#FFFFFF":"#F3EEE3"};display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:end;padding:5px 8px">
+          ${a.creatorSig?`<img src="${esc(a.creatorSig)}" alt="Signature" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-height:60px;max-width:80%">`:""}
+          <span style="font-size:9px;color:#7A0D08;font-weight:500;position:relative">Signature</span>
+          <span dir="rtl" style="font-family:'Zain',sans-serif;font-size:11px;color:#7A0D08;position:relative">التوقيع</span></div>
+        <div style="display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:4px 8px;font-size:10px;align-items:baseline">
+          <span style="color:#7A0D08">Name</span><span style="border-bottom:1px solid rgba(12,13,12,0.3);padding-bottom:2px;font-weight:600;text-align:center">${esc(a.creatorSignedName||name)}</span><span dir="rtl" style="font-family:'Zain',sans-serif;font-size:12px;color:#7A0D08">الاسم</span>
+          <span style="color:#7A0D08">Date</span><span style="border-bottom:1px solid rgba(12,13,12,0.3);padding-bottom:2px;text-align:center;color:${sd?"#0C0D0C":"rgba(12,13,12,0.6)"}">${esc(sd||"Auto-filled on signing")}</span><span dir="rtl" style="font-family:'Zain',sans-serif;font-size:12px;color:#7A0D08">التاريخ</span>
+        </div></div>
+      <div style="font-size:8.5px;color:rgba(12,13,12,.6)">Signed electronically · وُقّع إلكترونياً</div>
+    </section>
+    <footer style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:16px;padding-top:5px;margin-top:auto;border-top:1px solid #0C0D0C;font-size:8.5px;letter-spacing:0.16em;text-transform:uppercase">
+      <span>percentlabs</span><span>Receipt No. ${esc(a.no||"")}</span><span dir="rtl" style="font-family:'Zain',sans-serif;font-size:11px;letter-spacing:0">برسنت لابس</span>
+    </footer>
+  </section>`;
+  }
   function render(a, opts){
+    if(a && a.kind==="receipt") return renderReceipt(a, opts);
     opts = opts || {};
     const logo = opts.logo || "agreement-logo.png";
     const price = `${Number(a.price||0).toLocaleString("en-US")} ${a.currency||"USD"}`;
