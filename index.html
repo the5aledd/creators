@@ -168,7 +168,9 @@ tr:last-child td{border-bottom:0}
 .dbody{overflow-y:auto;padding:18px 20px;display:grid;gap:18px;flex:1}
 .dfoot{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
 .dfoot .sp{margin-left:auto}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.cform-note{grid-column:1/-1;grid-row:2;margin:-4px 0 2px} .cf-name{grid-column:2;grid-row:1}
+@media (max-width:480px){.cform-note,.cf-name{grid-column:auto;grid-row:auto}}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 @media (max-width:480px){.grid2,.grid3{grid-template-columns:1fr}}
 .field{display:grid;gap:5px;min-width:0}
@@ -1115,7 +1117,7 @@ async function boot(){
   db = FB.fs;
   unsubs.forEach(u=>u()); unsubs = [];
   unsubs.push(db.collection("creators").limit(1000).onSnapshot(snap=>{
-    const o={}; snap.docs.forEach(d=>{ const x=d.data(); const h=x.handle||d.id.replace(/^~/,""); o[h]={...x, handle:h}; });
+    const o={}; snap.docs.forEach(d=>{ const x=d.data(); if(x.movedTo) return; const h=x.handle||d.id.replace(/^~/,""); o[h]={...x, handle:h}; });
     for(const c of Object.values(o)){ const b={}; for(const [k,v] of Object.entries(c.brands||{})) b[k]=normStatus(v); c.brands=b; }
     S.creators=o; S.loaded.c=true; recompute(); render();
   }, e=>toast("Lost the live connection to creators. Reload the page.")));
@@ -1284,7 +1286,7 @@ function filtered(){
   const f=S.f, q=f.q.trim().toLowerCase().replace(/^@/,"");
   const maxRate = parseFloat(f.maxRate);
   return Object.values(S.creators).filter(c=>{
-    if(q && !(c.handle.includes(q) || (c.name||"").toLowerCase().includes(q) || (c.notes||"").toLowerCase().includes(q))) return false;
+    if(q && !(c.handle.includes(q) || (c.prevHandles||[]).some(x=>x.includes(q)) || (c.name||"").toLowerCase().includes(q) || (c.notes||"").toLowerCase().includes(q))) return false;
     if(f.cats.size && !f.cats.has(c.category)) return false;
     if(f.tiers.size && !f.tiers.has(tierOf(c.followers))) return false;
     if(f.platform && !platformsOf(c)[f.platform]) return false;
@@ -2459,8 +2461,9 @@ function detailsForm(c, isNew){
   if(isNew) return onboardForm(c);
   const opt=(v,cur)=>`<option ${v===cur?"selected":""}>${esc(v)}</option>`;
   return `<div class="cform"><div class="grid2">
-      ${isNew?`<label class="field"><span>Instagram username</span><input id="e_handle" type="text" placeholder="@handle" autocomplete="off"></label>`:""}
-      <label class="field"><span>Name</span><input id="e_name" type="text" value="${esc(c.name)}"></label>
+      ${isNew?`<label class="field"><span>Instagram username</span><input id="e_handle" type="text" placeholder="@handle" autocomplete="off"></label>`:`<label class="field"><span>Instagram username</span><input id="e_handle_edit" type="text" value="@${esc(c.handle)}" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="e_handle_hint"></label>`}
+      ${isNew?"":`<p class="hint cform-note" id="e_handle_hint">Changed their Instagram username? Type the new one. Their deals, prices, history and open receipts move with it.</p>`}
+      <label class="field${isNew?"":" cf-name"}"><span>Name</span><input id="e_name" type="text" value="${esc(c.name)}"></label>
       <div class="field"><span>Phone (optional, for WhatsApp or calls)</span><div class="phrow"><select id="e_cc" class="in" aria-label="Country code">${COUNTRIES.map(([cc,n])=>`<option value="${cc}" ${(c.phone?.cc||"+963")===cc?"selected":""}>${n} ${cc}</option>`).join("")}</select><input id="e_ph" class="in" type="tel" inputmode="tel" placeholder="9xx xxx xxx" value="${esc(c.phone?.num||"")}"></div></div>
       <label class="field"><span>Creator type</span><select id="e_lg"><option value="" ${!c.league?"selected":""}>Automatic (from prices and deals)</option><option value="paid" ${c.league==="paid"?"selected":""}>Paid</option><option value="ugc" ${c.league==="ugc"?"selected":""}>UGC (free)</option></select></label>
       <label class="field"><span>Category</span><select id="e_cat">${CATS.map(x=>opt(x,c.category)).join("")}</select></label>
@@ -2640,7 +2643,13 @@ function openCreator(h, isNew, editing){
   wirePackages(); wireOnboard();
   document.querySelectorAll(".platedit .pe-on").forEach(cb=>cb.addEventListener("change",()=>{ const r=cb.closest(".pe"); r.querySelectorAll(".pe-f,.pe-h").forEach(i=>i.disabled=!cb.checked); if(cb.checked) r.querySelector(".pe-f").focus(); }));
   $("#saveBtn")?.addEventListener("click", async ()=>{
-    const handle = isNew ? ($("#e_handle").value||"").trim().replace(/^@/,"").replace(/^https?:\/\/(www\.)?instagram\.com\//i,"").replace(/^instagram\.com\//i,"").replace(/[/?#].*$/,"").toLowerCase() : c.handle;
+    const normH = v => (v||"").trim().replace(/^@/,"").replace(/^https?:\/\/(www\.)?instagram\.com\//i,"").replace(/^instagram\.com\//i,"").replace(/[/?#].*$/,"").toLowerCase();
+    const handle = isNew ? normH($("#e_handle").value) : c.handle;
+    const newHandle = !isNew && $("#e_handle_edit") ? normH($("#e_handle_edit").value) : handle;
+    if(newHandle!==handle){
+      if(!/^[a-z0-9_.]{1,30}$/.test(newHandle) || /^\.+$/.test(newHandle)){ toast("Enter a valid Instagram username: letters, numbers, dots and underscores."); $("#e_handle_edit").focus(); return; }
+      if(S.creators[newHandle]){ toast(`@${newHandle} is already in the roster. Open that profile instead, or pick another username.`); $("#e_handle_edit").focus(); return; }
+    }
     if(!/^[a-z0-9_.]{1,30}$/.test(handle) || /^\.+$/.test(handle)){ toast("Enter a valid Instagram username: letters, numbers, dots and underscores."); return; }
     if(isNew && S.creators[handle]){ toast(`@${handle} is already in the roster.`); openCreator(handle); return; }
     const plats = {};
@@ -2666,6 +2675,22 @@ function openCreator(h, isNew, editing){
     const changed = isNew ? [] : Object.entries(FIELDS).filter(([f])=>JSON.stringify(c[f]??null)!==JSON.stringify(doc[f]??null)).map(([,l])=>l);
     const log = isNew ? {act:"onboard", summary:`Onboarded @${handle}${doc.category?` · ${doc.category}`:""}${doc.followers?` · ${fmtN(doc.followers)} followers`:""}`, ref:{creator:handle}}
       : changed.length ? {act:"edit_creator", summary:`@${handle}: changed ${changed.join(", ")}`, ref:{creator:handle}} : null;
+    if(!isNew && newHandle!==handle){
+      // Move everything to the new username in one go.
+      const nd = {...doc, handle:newHandle, prevHandles:[...(c.prevHandles||[]).filter(x=>x!==newHandle), handle], renamedOn:today, renamedBy:S.me?.name||""};
+      const deals = Object.entries(S.campaigns).filter(([,k])=>k.handle===handle);
+      const openR = Object.values(S.agr||{}).filter(a=>a.handle===handle && a.status==="open");
+      const ok = await write(async ()=>{
+        const b = db.batch();
+        b.set(cdoc(newHandle), nd);
+        deals.forEach(([id])=>b.update(db.collection("campaigns").doc(id), {handle:newHandle}));
+        openR.forEach(a=>b.update(db.collection("agreements").doc(a.id), {handle:newHandle}));
+        if(can("delCreator")) b.delete(cdoc(handle)); else b.set(cdoc(handle), {handle, movedTo:newHandle, movedOn:today, movedBy:S.me?.name||""});
+        await b.commit();
+      }, `Username changed to @${newHandle}`, {act:"edit_creator", summary:`@${handle} is now @${newHandle}${deals.length?` (${deals.length} deal${deals.length>1?"s":""} moved)`:""}${changed.length?` · also changed ${changed.join(", ")}`:""}`, ref:{creator:newHandle}});
+      if(ok){ delete S.creators[handle]; S.creators[newHandle]=nd; deals.forEach(([id])=>{ if(S.campaigns[id]) S.campaigns[id].handle=newHandle; }); recompute(); render(); openCreator(newHandle); }
+      return;
+    }
     if(await write(()=>cdoc(handle).set(doc), isNew?`@${handle} onboarded`:"Details saved", log)){ S.creators[handle]=doc; if(isNew){ render(); onboardDone(handle); } else openCreator(handle); }
   });
   $("#delBtn")?.addEventListener("click",()=>{
